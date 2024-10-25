@@ -1,4 +1,5 @@
 ﻿using DTOs.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -23,14 +24,11 @@ namespace UserServiceApi.Services
 
         public async Task<AuthResultDto> RegisterAsync(RegisterDto registerDto)
         {
-            // Перевірка наявності користувача з таким же email
             if (await _dbContext.Users.AnyAsync(u => u.Email == registerDto.Email))
                 return new AuthResultDto { IsSuccess = false, ErrorMessage = "User already exists." };
 
-            // Хешування пароля
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
 
-            // Створення нового користувача
             var user = new User
             {
                 FirstName = registerDto.FirstName,
@@ -55,7 +53,6 @@ namespace UserServiceApi.Services
         }
 
 
-
         public async Task<AuthResultDto> UpdateProfileAsync(int userId, UpdateDto updateDto)
         {
             var user = await _dbContext.Users.FindAsync(userId);
@@ -73,7 +70,8 @@ namespace UserServiceApi.Services
 
         public async Task<AuthResultDto> LoginAsync(LoginDto loginDto)
         {
-            var user = await _dbContext.Users.SingleOrDefaultAsync(u => u.Email == loginDto.Email);
+            var user = await _dbContext.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Email == loginDto.Email);
+            var k = user.Roles;
             if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
                 return new AuthResultDto { IsSuccess = false, ErrorMessage = "Invalid credentials." };
 
@@ -83,6 +81,7 @@ namespace UserServiceApi.Services
 
         private string GenerateJwtToken(User user)
         {
+            var k = user;
             var roleClaims = user.Roles.Select(role => new Claim(ClaimTypes.Role, role.Name)).ToArray();
 
             var claims = new List<Claim>
