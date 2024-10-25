@@ -40,6 +40,21 @@ namespace UserServiceApi.Services
             return new AuthResultDto { IsSuccess = true, Token = token };
         }
 
+        public async Task<AuthResultDto> UpdateProfileAsync(int userId, UpdateProfileDto updateDto)
+        {
+            var user = await _dbContext.Users.FindAsync(userId);
+            if (user == null)
+                return new AuthResultDto { IsSuccess = false, ErrorMessage = "User not found." };
+
+            user.FirstName = updateDto.FirstName;
+            user.LastName = updateDto.LastName;
+            user.Email = updateDto.Email;
+
+            await _dbContext.SaveChangesAsync();
+            return new AuthResultDto { IsSuccess = true };
+        }
+
+
         public async Task<AuthResultDto> LoginAsync(LoginDto loginDto)
         {
             var user = await _dbContext.Users.SingleOrDefaultAsync(u => u.Email == loginDto.Email);

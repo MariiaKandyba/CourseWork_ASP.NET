@@ -1,13 +1,9 @@
-﻿namespace DTOs.Auth
+﻿namespace UserServiceApi.Models
 {
-    public class RegisterDto
+    public class UpdateDto
     {
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Email { get; set; }
-        public string Password { get; set; }
     }
-
-
-
 }
