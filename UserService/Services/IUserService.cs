@@ -1,4 +1,5 @@
 ﻿using DTOs.Auth;
+using UserServiceApi.Models;
 
 namespace UserServiceApi.Services
 {
@@ -6,6 +7,8 @@ namespace UserServiceApi.Services
     {
         Task<AuthResultDto> RegisterAsync(RegisterDto registerDto);
         Task<AuthResultDto> LoginAsync(LoginDto loginDto);
+        Task<AuthResultDto> UpdateProfileAsync(int userId, UpdateDto updateDto);
+
     }
 
 }

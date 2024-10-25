@@ -23,16 +23,30 @@ namespace UserServiceApi.Services
 
         public async Task<AuthResultDto> RegisterAsync(RegisterDto registerDto)
         {
+            // Перевірка наявності користувача з таким же email
             if (await _dbContext.Users.AnyAsync(u => u.Email == registerDto.Email))
                 return new AuthResultDto { IsSuccess = false, ErrorMessage = "User already exists." };
 
+            // Хешування пароля
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
 
+            // Створення нового користувача
             var user = new User
             {
+                FirstName = registerDto.FirstName,
+                LastName = registerDto.LastName,
                 Email = registerDto.Email,
-                PasswordHash = hashedPassword
+                PasswordHash = hashedPassword,
+                Roles = new List<Role>() 
             };
+
+            var defaultRole = await _dbContext.Roles.SingleOrDefaultAsync(r => r.Name == "User"); 
+
+            if (defaultRole != null)
+            {
+                user.Roles.Add(defaultRole);
+            }
+
             _dbContext.Users.Add(user);
             await _dbContext.SaveChangesAsync();
 
@@ -40,7 +54,9 @@ namespace UserServiceApi.Services
             return new AuthResultDto { IsSuccess = true, Token = token };
         }
 
-        public async Task<AuthResultDto> UpdateProfileAsync(int userId, UpdateProfileDto updateDto)
+
+
+        public async Task<AuthResultDto> UpdateProfileAsync(int userId, UpdateDto updateDto)
         {
             var user = await _dbContext.Users.FindAsync(userId);
             if (user == null)
@@ -67,11 +83,18 @@ namespace UserServiceApi.Services
 
         private string GenerateJwtToken(User user)
         {
-            var claims = new[]
+            var roleClaims = user.Roles.Select(role => new Claim(ClaimTypes.Role, role.Name)).ToArray();
+
+            var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email)
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim("firstName", user.FirstName),
+                new Claim("lastName", user.LastName),
             };
+
+            claims.AddRange(roleClaims);
+
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
