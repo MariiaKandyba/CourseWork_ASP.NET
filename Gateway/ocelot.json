@@ -23,6 +23,22 @@
       ],
       "UpstreamPathTemplate": "/gateway/users/register",
       "UpstreamHttpMethod": [ "POST" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/users/updateProfile",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 44362
+        }
+      ],
+      "UpstreamPathTemplate": "/gateway/users/updateProfile",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "Scopes": []
+      }
     }
   ]
 }
