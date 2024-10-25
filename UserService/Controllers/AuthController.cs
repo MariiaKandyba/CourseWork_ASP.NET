@@ -1,6 +1,8 @@
 ﻿using DTOs.Auth;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using UserServiceApi.Models;
 using UserServiceApi.Services;
 
 namespace UserServiceApi.Controllers
@@ -37,5 +39,17 @@ namespace UserServiceApi.Controllers
             }
             return Unauthorized(result.ErrorMessage);
         }
+        [HttpPut("updateProfile")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateDto updateProfileDto)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            var result = await _userService.UpdateProfileAsync(userId, updateProfileDto);
+            if (result.IsSuccess)
+            {
+                return Ok();
+            }
+            return BadRequest(result.ErrorMessage);
+        }
+
     }
 }
