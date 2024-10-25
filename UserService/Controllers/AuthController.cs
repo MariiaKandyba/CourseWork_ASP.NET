@@ -1,4 +1,5 @@
 ﻿using DTOs.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -39,7 +40,9 @@ namespace UserServiceApi.Controllers
             }
             return Unauthorized(result.ErrorMessage);
         }
+
         [HttpPut("updateProfile")]
+        [Authorize]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateDto updateProfileDto)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
