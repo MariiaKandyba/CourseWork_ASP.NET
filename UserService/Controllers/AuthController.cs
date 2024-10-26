@@ -25,21 +25,40 @@ namespace UserServiceApi.Controllers
             var result = await _userService.RegisterAsync(registerDto);
             if (result.IsSuccess)
             {
-                return Ok(new { result.Token });
+                return Ok(new AuthResultDto
+                {
+                    IsSuccess = true,
+                    Token = result.Token
+                });
             }
-            return BadRequest(result.ErrorMessage);
+            return Unauthorized(new AuthResultDto
+            {
+                IsSuccess = false,
+                ErrorMessage = result.ErrorMessage
+            });
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
             var result = await _userService.LoginAsync(loginDto);
+
             if (result.IsSuccess)
             {
-                return Ok(new { result.Token });
+                return Ok(new AuthResultDto
+                {
+                    IsSuccess = true,
+                    Token = result.Token
+                });
             }
-            return Unauthorized(result.ErrorMessage);
+
+            return Unauthorized(new AuthResultDto
+            {
+                IsSuccess = false,
+                ErrorMessage = result.ErrorMessage
+            });
         }
+
 
         [HttpPut("updateProfile")]
         [Authorize]

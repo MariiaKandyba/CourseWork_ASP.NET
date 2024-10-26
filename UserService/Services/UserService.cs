@@ -48,8 +48,7 @@ namespace UserServiceApi.Services
             _dbContext.Users.Add(user);
             await _dbContext.SaveChangesAsync();
 
-            var token = GenerateJwtToken(user);
-            return new AuthResultDto { IsSuccess = true, Token = token };
+            return new AuthResultDto { IsSuccess = true };
         }
 
 
@@ -62,16 +61,15 @@ namespace UserServiceApi.Services
             user.FirstName = updateDto.FirstName;
             user.LastName = updateDto.LastName;
             user.Email = updateDto.Email;
-
+            var token = GenerateJwtToken(user);
             await _dbContext.SaveChangesAsync();
-            return new AuthResultDto { IsSuccess = true };
+            return new AuthResultDto { IsSuccess = true, Token = token };
         }
 
 
         public async Task<AuthResultDto> LoginAsync(LoginDto loginDto)
         {
             var user = await _dbContext.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Email == loginDto.Email);
-            var k = user.Roles;
             if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
                 return new AuthResultDto { IsSuccess = false, ErrorMessage = "Invalid credentials." };
 
@@ -81,7 +79,6 @@ namespace UserServiceApi.Services
 
         private string GenerateJwtToken(User user)
         {
-            var k = user;
             var roleClaims = user.Roles.Select(role => new Claim(ClaimTypes.Role, role.Name)).ToArray();
 
             var claims = new List<Claim>

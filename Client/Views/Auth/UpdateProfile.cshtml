@@ -1,0 +1,24 @@
+﻿@using UserServiceApi.Models
+@model UpdateDto
+
+<h2>Оновлення профілю</h2>
+
+<form asp-action="UpdateProfile" method="post">
+    <label>Ім'я:</label>
+    <input asp-for="FirstName" required />
+    <label>Прізвище:</label>
+    <input asp-for="LastName" required />
+    <label>Email:</label>
+    <input asp-for="Email" required />
+    <button type="submit">Оновити профіль</button>
+</form>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="text-danger">
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <p>@error.ErrorMessage</p>
+        }
+    </div>
+}

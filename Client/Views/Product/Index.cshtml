@@ -1,0 +1,32 @@
+﻿@using DTOs.Products
+@model List<ProductDto>
+
+<h1 class="text-center my-4">Products</h1>
+
+<div class="container">
+    <div class="row">
+        @foreach (var product in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <img src="@product.Images.FirstOrDefault()?.ImageUrl"
+                         alt="@product.Name"
+                         class="card-img-top"
+                         style="height: 200px; object-fit: cover;"
+                         onmouseover="this.style.opacity='0.8';"
+                         onmouseout="this.style.opacity='1';"
+                         onclick="location.href='@Url.Action("Details", "Products", new { id = product.Id })';" />
+                    <div class="card-body">
+                        <h5 class="card-title">@product.Name</h5>
+                        <p class="card-text">@product.Description</p>
+                        <p class="card-text">@product.Price.ToString("C")</p>
+                        <p class="card-text">@($"Available: {(product.IsAvailable ? "Yes" : "No")}")</p>
+                        <p class="card-text">Category: @product.Category?.Name</p>
+                        <p class="card-text">Brand: @product.Brand?.Name</p>
+                        <a href="@Url.Action("AddToCart", "Cart", new { productId = product.Id })" class="btn btn-primary">Add to Cart</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

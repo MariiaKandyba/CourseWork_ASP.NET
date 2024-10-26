@@ -1,0 +1,24 @@
+﻿@{
+    ViewData["Title"] = "Shop";
+}
+
+<div class="text-center">
+    <h1 class="display-4">HERE ARE YOUR PRODUCTS BEATCH</h1>
+    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+
+<h1>Welcome to Our Store!</h1>
+
+@if (ViewBag.IsAuthenticated)
+{
+    <p>You are logged in.</p>
+    <a href="@Url.Action("UpdateProfile", "Auth")">View Profile</a>
+    <a href="@Url.Action("Logout", "Auth")">Logout</a>
+}
+else
+{
+    <p>Please log in to see more content.</p>
+    <a href="@Url.Action("Login", "Auth")">Login</a>
+    <a href="@Url.Action("Register", "Auth")">Register</a>
+}
+
