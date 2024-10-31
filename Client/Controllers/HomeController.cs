@@ -15,8 +15,8 @@ namespace Client.Controllers
 
         public IActionResult Index()
         {
-            ViewBag.IsAuthenticated = HttpContext.Request.Cookies.ContainsKey("jwtToken");
-            return View();
+
+            return RedirectToAction("Index", "Products");
         }
 
         public IActionResult Privacy()
