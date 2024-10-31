@@ -11,7 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gateway", "Gateway\Gateway.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Client", "Client\Client.csproj", "{ABC0A8B6-15AD-4BA5-8F0C-B780B114020C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductServiceApi", "ProductServiceApi\ProductServiceApi.csproj", "{DC5A7D9E-0C87-454F-8DBF-62F449729060}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProductServiceApi", "ProductServiceApi\ProductServiceApi.csproj", "{DC5A7D9E-0C87-454F-8DBF-62F449729060}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderServiceApi", "OrderServiceApi\OrderServiceApi.csproj", "{839E4329-D57F-4E10-A61B-FF16FBEA122C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{DC5A7D9E-0C87-454F-8DBF-62F449729060}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DC5A7D9E-0C87-454F-8DBF-62F449729060}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DC5A7D9E-0C87-454F-8DBF-62F449729060}.Release|Any CPU.Build.0 = Release|Any CPU
+		{839E4329-D57F-4E10-A61B-FF16FBEA122C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{839E4329-D57F-4E10-A61B-FF16FBEA122C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{839E4329-D57F-4E10-A61B-FF16FBEA122C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{839E4329-D57F-4E10-A61B-FF16FBEA122C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

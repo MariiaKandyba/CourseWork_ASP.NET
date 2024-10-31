@@ -1,5 +1,4 @@
 ﻿using DTOs.Auth;
-using UserServiceApi.Models;
 
 namespace UserServiceApi.Services
 {

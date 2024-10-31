@@ -1,4 +1,4 @@
-﻿namespace UserServiceApi.Models
+﻿namespace DTOs.Auth
 {
     public class UpdateDto
     {
