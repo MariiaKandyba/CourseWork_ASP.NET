@@ -68,8 +68,18 @@ namespace UserServiceApi.Controllers
             var result = await _userService.UpdateProfileAsync(userId, updateProfileDto);
             if (result.IsSuccess)
             {
-                return Ok();
+                return Ok(new AuthResultDto
+                {
+                    IsSuccess = true,
+                    Token = result.Token
+                });
             }
+
+            return Unauthorized(new AuthResultDto
+            {
+                IsSuccess = false,
+                ErrorMessage = result.ErrorMessage
+            });
             return BadRequest(result.ErrorMessage);
         }
 
