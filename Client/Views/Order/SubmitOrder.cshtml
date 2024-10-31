@@ -1,0 +1,38 @@
+﻿@using System.Globalization
+@model OrderViewModel
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Items)
+        {
+            <tr>
+                <td>
+                    <img src="@item.ImageUrl" alt="@item.Name" style="height: 50px; width: auto;" />
+                    @item.Name
+                </td>
+                <td>$@item.Price.ToString()</td>
+
+                <td>
+                    <span id="quantity-@item.Id">@item.Quantity</span>
+                </td>
+                <td id="total-@item.Id">$@((item.Price * item.Quantity))</td>
+                
+            </tr>
+        }
+    </tbody>
+</table>
+<h3 class="text-right">
+    Total:
+    <span id="totalPrice">
+        $@(Model.TotalPrice.ToString())
+    </span>
+
+</h3>

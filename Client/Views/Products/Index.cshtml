@@ -1,0 +1,76 @@
+﻿@using DTOs.Products
+@model List<ProductDto>
+
+
+<h1 class="text-center my-4">Products</h1>
+
+<div class="container">
+    <div class="row">
+        @foreach (var product in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <img src="@product.Images.FirstOrDefault()?.ImageUrl"
+                         alt="@product.Name"
+                         class="card-img-top"
+                         style="height: 200px; object-fit: cover;"
+                         onclick="location.href='@Url.Action("Details", "Products", new { id = product.Id })';" />
+                    <div class="card-body">
+                        <h5 class="card-title">@product.Name</h5>
+                        <p class="card-text">@product.Description</p>
+                        <p class="card-text">@product.Price.ToString("C")</p>
+                        <a href="javascript:void(0);"
+                           onclick="addToCart(this, @product.Id)"
+                           class="btn btn-primary add-to-cart-btn"
+                           data-product-id="@product.Id">
+                            Add to Cart
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+
+    $(document).ready(function () {
+        $.get('@Url.Action("GetCartItems", "Cart")', function (cart) {
+            $('.add-to-cart-btn').each(function () {
+                const productId = $(this).data('product-id');
+                const isProductInCart = cart.some(item => item.productId === productId);
+                if (isProductInCart) {
+                    $(this).text("In Cart")  
+                        .removeClass("btn-primary")
+                        .addClass("btn-success")
+                        .attr("href", '@Url.Action("Index", "Cart")');
+                }
+            });
+        });
+    });
+
+    function addToCart(button, productId) {
+        const $button = $(button);
+        const isInCart = $button.text() === "In Cart"; // Перевірка, чи товар вже в кошику
+
+        if (!isInCart) {  
+            $.ajax({
+                url: '@Url.Action("Add", "Cart")',
+                type: 'POST',
+                data: { productId: productId },
+                success: function (result) {
+                    $button.text("In Cart") // Зміна тексту кнопки на "In Cart"
+                        .removeClass("btn-primary")
+                        .addClass("btn-success")
+                        .attr("href", '@Url.Action("Index", "Cart")');
+
+                    $("#cartItemCount").text(result.cartItemCount);
+                },
+                error: function () {
+                    alert("Error adding item to cart.");
+                }
+            });
+        }
+    }
+</script>

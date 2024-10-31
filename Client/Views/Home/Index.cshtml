@@ -9,7 +9,7 @@
 
 <h1>Welcome to Our Store!</h1>
 
-@if (ViewBag.IsAuthenticated)
+@if (User.Identity.IsAuthenticated)
 {
     <p>You are logged in.</p>
     <a href="@Url.Action("UpdateProfile", "Auth")">View Profile</a>
