@@ -21,6 +21,55 @@ namespace ProductServiceApi.Controllers
         {
             _context = context;
         }
+        [HttpPost("batch")]
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetProductsByIds([FromBody] List<int> ids)
+        {
+            var products = await _context.Products
+                .Where(p => ids.Contains(p.Id))
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.Specifications)
+                .Include(p => p.Images)
+                .Include(p => p.Reviews)
+                .ToListAsync();
+
+            var productDtos = products.Select(p => new ProductDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                Price = p.Price,
+                IsAvailable = p.IsAvailable,
+                Category = new CategoryDto
+                {
+                    Id = p.Category.Id,
+                    Name = p.Category.Name
+                },
+                Brand = new BrandDto
+                {
+                    Id = p.Brand.Id,
+                    Name = p.Brand.Name
+                },
+                Specifications = p.Specifications.Select(s => new SpecificationDto
+                {
+                    Key = s.Key,
+                    Value = s.Value
+                }).ToList(),
+                Images = p.Images.Select(i => new ImageDto
+                {
+                    ImageUrl = i.ImageUrl
+                }).ToList(),
+                Reviews = p.Reviews.Select(r => new ReviewDto
+                {
+                    Rating = r.Rating,
+                    Comment = r.Comment,
+                    ReviewDate = r.ReviewDate
+                }).ToList()
+            }).ToList();
+
+            return Ok(productDtos);
+        }
+
 
         // GET: api/Products
         [HttpGet]
@@ -66,25 +115,66 @@ namespace ProductServiceApi.Controllers
                     Comment = r.Comment,
                     ReviewDate = r.ReviewDate
                 }).ToList()
-            }).ToList(); // Додайте ToList(), щоб створити список
+            }).ToList(); 
 
-            return Ok(productDtos); // Повертаємо список без кореневого класу
+            return Ok(productDtos); 
         }
 
 
         // GET: api/Products/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProduct(int id)
+        public async Task<ActionResult<ProductDto>> GetProduct(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            var product = await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.Specifications)
+                .Include(p => p.Images)
+                .Include(p => p.Reviews)
+                .FirstOrDefaultAsync(p => p.Id == id);
 
             if (product == null)
             {
                 return NotFound();
             }
 
-            return product;
+            var productDto = new ProductDto
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                Price = product.Price,
+                IsAvailable = product.IsAvailable,
+                Category = new CategoryDto
+                {
+                    Id = product.Category.Id,
+                    Name = product.Category.Name
+                },
+                Brand = new BrandDto
+                {
+                    Id = product.Brand.Id,
+                    Name = product.Brand.Name
+                },
+                Specifications = product.Specifications.Select(s => new SpecificationDto
+                {
+                    Key = s.Key,
+                    Value = s.Value
+                }).ToList(),
+                Images = product.Images.Select(i => new ImageDto
+                {
+                    ImageUrl = i.ImageUrl
+                }).ToList(),
+                Reviews = product.Reviews.Select(r => new ReviewDto
+                {
+                    Rating = r.Rating,
+                    Comment = r.Comment,
+                    ReviewDate = r.ReviewDate
+                }).ToList()
+            };
+
+            return Ok(productDto);
         }
+
 
         // PUT: api/Products/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
