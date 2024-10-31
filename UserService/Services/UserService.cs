@@ -1,4 +1,5 @@
 ﻿using DTOs.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -30,19 +31,45 @@ namespace UserServiceApi.Services
 
             var user = new User
             {
+                FirstName = registerDto.FirstName,
+                LastName = registerDto.LastName,
                 Email = registerDto.Email,
-                PasswordHash = hashedPassword
+                PasswordHash = hashedPassword,
+                Roles = new List<Role>() 
             };
+
+            var defaultRole = await _dbContext.Roles.SingleOrDefaultAsync(r => r.Name == "User"); 
+
+            if (defaultRole != null)
+            {
+                user.Roles.Add(defaultRole);
+            }
+
             _dbContext.Users.Add(user);
             await _dbContext.SaveChangesAsync();
 
+            return new AuthResultDto { IsSuccess = true };
+        }
+
+
+        public async Task<AuthResultDto> UpdateProfileAsync(int userId, UpdateDto updateDto)
+        {
+            var user = await _dbContext.Users.FindAsync(userId);
+            if (user == null)
+                return new AuthResultDto { IsSuccess = false, ErrorMessage = "User not found." };
+
+            user.FirstName = updateDto.FirstName;
+            user.LastName = updateDto.LastName;
+            user.Email = updateDto.Email;
             var token = GenerateJwtToken(user);
+            await _dbContext.SaveChangesAsync();
             return new AuthResultDto { IsSuccess = true, Token = token };
         }
 
+
         public async Task<AuthResultDto> LoginAsync(LoginDto loginDto)
         {
-            var user = await _dbContext.Users.SingleOrDefaultAsync(u => u.Email == loginDto.Email);
+            var user = await _dbContext.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Email == loginDto.Email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
                 return new AuthResultDto { IsSuccess = false, ErrorMessage = "Invalid credentials." };
 
@@ -52,11 +79,18 @@ namespace UserServiceApi.Services
 
         private string GenerateJwtToken(User user)
         {
-            var claims = new[]
+            var roleClaims = user.Roles.Select(role => new Claim(ClaimTypes.Role, role.Name)).ToArray();
+
+            var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email)
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim("firstName", user.FirstName),
+                new Claim("lastName", user.LastName),
             };
+
+            claims.AddRange(roleClaims);
+
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

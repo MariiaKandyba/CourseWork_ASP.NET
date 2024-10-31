@@ -6,6 +6,8 @@ namespace UserServiceApi.Services
     {
         Task<AuthResultDto> RegisterAsync(RegisterDto registerDto);
         Task<AuthResultDto> LoginAsync(LoginDto loginDto);
+        Task<AuthResultDto> UpdateProfileAsync(int userId, UpdateDto updateDto);
+
     }
 
 }

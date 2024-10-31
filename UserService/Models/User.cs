@@ -7,9 +7,7 @@
         public string LastName { get; set; } 
         public string Email { get; set; }
         public string PasswordHash { get; set; }
-        public bool IsEmailVerified { get; set; } 
-        public ICollection<Role> Roles{ get; set; } 
+        public ICollection<Role> Roles{ get; set; } = new List<Role>();
     }
-
 
 }
