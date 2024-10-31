@@ -1,4 +1,6 @@
+using Client.Models;
 using Client.Services.Auth;
+using Client.Services.Order;
 using Client.Services.Products;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -6,23 +8,15 @@ using System.Net.Http.Headers;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddControllersWithViews();
 
 // Add services to the container.
 builder.Services.AddHttpClient<AuthService>();
 builder.Services.AddHttpClient<ProductService>();
-builder.Services.AddHttpClient("ApiWithToken", client =>
-{
-    client.BaseAddress = new Uri("https://localhost:7140/gateway"); // Базова адреса вашого API
-}).ConfigureHttpClient((serviceProvider, client) =>
-{
-    var httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
-    var token = httpContextAccessor.HttpContext.Request.Cookies["jwtToken"];
+builder.Services.AddHttpClient<OrderService>();
 
-    if (!string.IsNullOrEmpty(token))
-    {
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-    }
-});
+// у файлі Program.cs або Startup.cs
+builder.Services.AddSingleton<CurrentUser>();
 
 builder.Services.AddDistributedMemoryCache(); // Налаштування кешу
 builder.Services.AddSession(options =>
@@ -32,29 +26,37 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true; // Сесія потрібна для програми
 });
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+//builder.Services.AddAuthentication(options =>
+//{
+//    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+//    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+//})
+//.AddJwtBearer(options =>
+//{
+//    options.RequireHttpsMetadata = false;
+//    options.TokenValidationParameters = new TokenValidationParameters
+//    {
+//        ValidateIssuer = true,
+//        ValidateAudience = true,
+//        ValidateLifetime = true,
+//        ValidateIssuerSigningKey = true,
+//        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+//        ValidAudience = builder.Configuration["Jwt:Audience"],
+//        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+//    };
+//});
+
+builder.Services.AddAuthentication("Cookies")
+    .AddCookie("Cookies", options =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-    };
-});
+        options.LoginPath = "/Auth/Login"; // Сторінка логіну
+        options.LogoutPath = "/Auth/Logout"; // Сторінка логауту
+        options.ExpireTimeSpan = TimeSpan.FromHours(1); // Час дії cookies
+    });
 // В Program.cs
 builder.Services.AddHttpContextAccessor(); // Додаємо IHttpContextAccessor
 
 
-builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
@@ -69,8 +71,8 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseSession();
-app.UseRouting();
 
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 

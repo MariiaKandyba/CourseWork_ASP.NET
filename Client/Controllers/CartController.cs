@@ -11,13 +11,11 @@ namespace Client.Controllers
     public class CartController : Controller
     {
         private readonly ProductService _productService;
-        private readonly CurrentUser _currentUser;
 
 
-        public CartController(ProductService productService, CurrentUser currentUser)
+        public CartController(ProductService productService)
         {
             _productService = productService;
-            _currentUser = currentUser;
         }
 
         //public async Task<IActionResult>Index()

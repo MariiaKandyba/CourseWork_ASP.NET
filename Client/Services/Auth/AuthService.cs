@@ -2,7 +2,6 @@
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;
-using UserServiceApi.Models;
 
 namespace Client.Services.Auth
 {
