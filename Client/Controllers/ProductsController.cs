@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Client.Controllers
 {
-    public class ProductController : Controller
+    public class ProductsController : Controller
     {
         private readonly ProductService _productService;
 
-        public ProductController(ProductService productService)
+        public ProductsController(ProductService productService)
         {
             _productService = productService;
         }
