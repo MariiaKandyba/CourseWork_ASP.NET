@@ -1,8 +1,12 @@
-﻿using Client.Services.Auth;
+﻿using Client.Extensions;
+using Client.Models;
+using Client.Services.Auth;
 using DTOs.Auth;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using UserServiceApi.Models;
 
 namespace Client.Controllers
@@ -37,15 +41,26 @@ namespace Client.Controllers
                     HttpOnly = true,
                     Expires = DateTimeOffset.UtcNow.AddHours(1)
                 });
+                var handler = new JwtSecurityTokenHandler();
+                var jwtToken = handler.ReadJwtToken(authResult.Token);
+
+                var claims = jwtToken.Claims.ToList();
+
+                var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
+                var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+                await HttpContext.SignInAsync("Cookies", claimsPrincipal);
 
                 return RedirectToAction("Index", "Home");
             }
             return View(model);
         }
 
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
             HttpContext.Response.Cookies.Delete("jwtToken");
+            await HttpContext.SignOutAsync("Cookies");
+
             return RedirectToAction("Index", "Home");
         }
         [HttpGet]
@@ -73,6 +88,16 @@ namespace Client.Controllers
                         HttpOnly = true,
                         Expires = DateTimeOffset.UtcNow.AddHours(1)
                     });
+                    var handler = new JwtSecurityTokenHandler();
+                    var jwtToken = handler.ReadJwtToken(loginResult.Token);
+
+                    var claims = jwtToken.Claims.ToList();
+
+                    var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
+                    var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+                    await HttpContext.SignInAsync("Cookies", claimsPrincipal);
+
                     return RedirectToAction("Index", "Home");
                 }
 
@@ -122,14 +147,20 @@ namespace Client.Controllers
                 }
 
                 var updateResult = await _authService.UpdateProfileAsync(model, token);
+                HttpContext.Response.Cookies.Append("jwtToken", updateResult.Token, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Expires = DateTimeOffset.UtcNow.AddHours(1)
+                });
 
                 if (!updateResult.IsSuccess)
                 {
+                   
                     ModelState.AddModelError(string.Empty, updateResult.ErrorMessage);
                     return View(model);
                 }
 
-                return RedirectToAction("Profile", "User");
+                return RedirectToAction("UpdateProfile", "Auth");
             }
             return View(model);
         }
