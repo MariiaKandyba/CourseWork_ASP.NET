@@ -73,10 +73,13 @@ namespace Client.Services.Auth
             try
             {
                 var response = await _httpClient.PutAsync("https://localhost:7140/gateway/users/updateProfile", content);
+                
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return new AuthResultDto { IsSuccess = true };
+                    var resultContent = await response.Content.ReadAsStringAsync();
+                    var authResult = JsonConvert.DeserializeObject<AuthResultDto>(resultContent);
+                    return new AuthResultDto { IsSuccess = true, Token = authResult.Token };
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync();
