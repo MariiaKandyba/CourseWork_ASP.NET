@@ -1,0 +1,179 @@
+﻿@using System.Globalization
+@model OrderViewModel
+
+<h1 class="text-center my-4">Shopping Cart</h1>
+
+@if (Model.FirstName != null) 
+{
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Компактний список товарів без кнопок для зміни кількості -->
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <img src="@item.ImageUrl" alt="@item.Name" style="height: 50px; width: auto;" />
+                                @item.Name
+                            </td>
+                            <td>$@item.Price.ToString()</td>
+                            <td>@item.Quantity</td>
+                            <td id="total-@item.Id">$@((item.Price * item.Quantity))</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <h3 class="text-right">
+                Total: <span id="totalPrice">$@Model.TotalPrice.ToString()</span>
+            </h3>
+        </div>
+        <div class="col-md-4">
+            <!-- Дані користувача з кнопкою підтвердження -->
+            <h3>Дані користувача:</h3>
+            @await Html.PartialAsync("UserDetailsPartial", new UserDetailsViewModel
+            {
+                FirstName = Model.FirstName,
+                LastName = Model.LastName,
+                Email = Model.Email,
+                Address = Model.DeliveryAddress
+            })
+
+            @using (Html.BeginForm("SubmitFinalOrder", "Order", FormMethod.Post))
+            {
+                <!-- Передача всього об’єкту OrderViewModel -->
+                @Html.HiddenFor(model => model.FirstName)
+                @Html.HiddenFor(model => model.LastName)
+                @Html.HiddenFor(model => model.Email)
+                 @Html.HiddenFor(model => model.DeliveryAddress.Street)
+                @Html.HiddenFor(model => model.DeliveryAddress.City)
+                @Html.HiddenFor(model => model.DeliveryAddress.Country)
+                @Html.HiddenFor(model => model.DeliveryAddress.ZipCode)
+
+                @for (int i = 0; i < Model.Items.Count; i++)
+                {
+                    <input type="hidden" name="Items[@i].Id" value="@Model.Items[i].Id" />
+                    <input type="hidden" name="Items[@i].Name" value="@Model.Items[i].Name" />
+                    <input type="hidden" name="Items[@i].Price" value="@Model.Items[i].Price" />
+                    <input type="hidden" name="Items[@i].Quantity" value="@Model.Items[i].Quantity" />
+                }
+
+                <button type="submit" class="btn btn-success btn-block mt-3">Підтвердити замовлення</button>
+            }
+            </div>
+    </div>
+}
+else 
+{
+    <!-- Повний вигляд кошика з кнопками зміни кількості, коли дані користувача відсутні -->
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <img src="@item.ImageUrl" alt="@item.Name" style="height: 50px; width: auto;" />
+                        @item.Name
+                    </td>
+                    <td>$@item.Price.ToString()</td>
+
+                    <td>
+                        <button class="btn btn-secondary" onclick="updateQuantity(@item.Id, -1)">-</button>
+                        <span id="quantity-@item.Id">@item.Quantity</span>
+                        <button class="btn btn-secondary" onclick="updateQuantity(@item.Id, 1)">+</button>
+                    </td>
+                    <td id="total-@item.Id">$@((item.Price * item.Quantity))</td>
+                    <td>
+                        <button class="btn btn-danger" onclick="removeFromCart(@item.Id)">Remove</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h3 class="text-right">
+        Total: <span id="totalPrice">$@Model.TotalPrice.ToString()</span>
+    </h3>
+
+    @if (User.Identity.IsAuthenticated)
+{
+    <a href="@Url.Action("Index", "Order")" class="btn btn-primary">Confirm</a>
+
+}
+else
+{
+    <div class="text-center my-3">
+        <p>Please log in or register to manage your cart.</p>
+        <a href="@Url.Action("Login", "Auth")" class="btn btn-primary">Log In</a>
+        <a href="@Url.Action("Register", "Auth")" class="btn btn-secondary">Register</a>
+    </div>
+}
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    function updateQuantity(productId, change) {
+        $.ajax({
+            url: '@Url.Action("UpdateQuantity", "Cart")',
+            type: 'POST',
+            data: { productId: productId, change: change },
+            success: function (result) {
+                $("#quantity-" + productId).text(result.newQuantity);
+
+                const priceText = $("tr:has(td:contains('" + productId + "')) td:nth-child(2)").text().replace(/[$]/g, '').replace(/,/g, '.').trim();
+                const price = parseFloat(priceText);
+
+                const newQuantity = result.newQuantity;
+                const newTotal = (price * newQuantity).toFixed(2);
+                $("#total-" + productId).text(`$${newTotal}`);
+
+                updateTotalPrice();
+            },
+            error: function () {
+                alert("Error updating quantity.");
+            }
+        });
+    }
+
+    function updateTotalPrice() {
+        let total = 0;
+        $("tbody tr").each(function () {
+            const totalText = $(this).find("td:nth-child(4)").text().replace(/[$]/g, '').replace(/,/g, '.').trim();
+            total += parseFloat(totalText);
+        });
+        $("#totalPrice").text(`$${total.toFixed(2)}`);
+    }
+
+    function removeFromCart(productId) {
+        $.ajax({
+            url: '@Url.Action("Remove", "Cart")',
+            type: 'POST',
+            data: { productId: productId },
+            success: function (result) {
+                $("#total-" + productId).closest('tr').remove();
+                updateTotalPrice();
+            },
+            error: function () {
+                alert("Error removing item from cart.");
+            }
+        });
+    }
+</script>
