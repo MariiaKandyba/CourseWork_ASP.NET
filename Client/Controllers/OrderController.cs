@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.IdentityModel.Tokens.Jwt;
-using UserServiceApi.Models;
+using DTOs.Products;
 
 namespace Client.Controllers
 {
