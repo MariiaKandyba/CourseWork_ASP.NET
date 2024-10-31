@@ -16,7 +16,6 @@ builder.Services.AddHttpClient<ProductService>();
 builder.Services.AddHttpClient<OrderService>();
 
 // у файлі Program.cs або Startup.cs
-builder.Services.AddSingleton<CurrentUser>();
 
 builder.Services.AddDistributedMemoryCache(); // Налаштування кешу
 builder.Services.AddSession(options =>
