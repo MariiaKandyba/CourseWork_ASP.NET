@@ -1,0 +1,91 @@
+﻿@using DTOs.Admin
+@model List<FullProductDto>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Full Product List</title>
+</head>
+<body>
+    <h1>Product List</h1>
+
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Price</th>
+                <th>Is Available</th>
+                <th>Category</th>
+                <th>Brand</th>
+                <th>Specifications</th>
+                <th>Images</th>
+                <th>Reviews</th>
+                <th>Stock Quantity</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var fullProduct in Model)
+            {
+                <tr>
+                    <td>@fullProduct.Product.Id</td>
+                    <td>@fullProduct.Product.Name</td>
+                    <td>@fullProduct.Product.Description</td>
+                    <td>@fullProduct.Product.Price.ToString("C")</td>
+                    <td>@(fullProduct.Product.IsAvailable ? "Yes" : "No")</td>
+                    <td>@fullProduct.Product.Category?.Name</td>
+                    <td>@fullProduct.Product.Brand?.Name</td>
+                    <td>
+                        @if (fullProduct.Product.Specifications != null && fullProduct.Product.Specifications.Any())
+                        {
+                            <ul>
+                                @foreach (var spec in fullProduct.Product.Specifications)
+                                {
+                                    <li>@spec.Key: @spec.Value</li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p>No specifications available</p>
+                        }
+                    </td>
+                    <td>
+                        @if (fullProduct.Product.Images != null && fullProduct.Product.Images.Any())
+                        {
+                            <ul>
+                                @foreach (var image in fullProduct.Product.Images)
+                                {
+                                    <li><img src="@image.ImageUrl" alt="Product Image" width="100" /></li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p>No images available</p>
+                        }
+                    </td>
+                    <td>
+                        @if (fullProduct.Product.Reviews != null && fullProduct.Product.Reviews.Any())
+                        {
+                            <ul>
+                                @foreach (var review in fullProduct.Product.Reviews)
+                                {
+                                    <li>Rating: @review.Rating, Comment: @review.Comment, Date: @review.ReviewDate.ToShortDateString()</li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p>No reviews available</p>
+                        }
+                    </td>
+                    <td>@fullProduct.StockQuantity</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</body>
+</html>

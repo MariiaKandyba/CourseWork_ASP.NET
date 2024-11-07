@@ -1,0 +1,48 @@
+﻿@using DTOs.Admin
+@model List<FullOrderDto>  
+
+<h2>All Orders</h2>
+
+@foreach (var order in Model)
+{
+    <div class="order">
+        <h3>Order ID: @order.Id</h3>
+        <p>Status: @order.Status</p>
+        <p>Created At: @order.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</p>
+        <p>User: @order.User.FirstName @order.User.LastName</p>
+        <p>Email: @order.User.Email</p>
+        
+        <h4>Delivery Address:</h4>
+        <p>@order.DeliveryAddress.Street, @order.DeliveryAddress.City, @order.DeliveryAddress.ZipCode, @order.DeliveryAddress.Country</p>
+
+        <h4>Items:</h4>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Total Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in order.Items)
+                {
+                    <tr>
+                        <td>
+                            <p>@item.Item.Name</p>
+                            <p>@item.Item.Description</p>
+                            <p><img src="@item.Item.Images.FirstOrDefault()?.ImageUrl" alt="@item.Item.Name" width="100" /></p>
+                        </td>
+                        <td>@item.Quantity</td>
+                        <td>@item.Price.ToString("C")</td>
+                        <td>@(item.Price * item.Quantity).ToString("C")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <h4>Total Price: @order.TotalPrice.ToString("C")</h4>
+    </div>
+    <hr />
+}
