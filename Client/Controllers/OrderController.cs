@@ -14,10 +14,12 @@ namespace Client.Controllers
     public class OrderController : Controller
     {
         private readonly IOrderService _orderService;
+        private readonly ProductService _productService;
 
-        public OrderController(OrderService orderService)
+        public OrderController(OrderService orderService, ProductService productService)
         {
             _orderService = orderService;
+            _productService = productService;
         }
 
         [HttpGet]
@@ -112,6 +114,38 @@ namespace Client.Controllers
 
             return View(orders);
         }
+        [HttpGet]
+        public async Task<IActionResult> OrderDetails(int id)
+        {
+            var orderDetails = await _orderService.GetOrderByIdAsync(id);
+
+            if (orderDetails == null)
+            {
+                return NotFound("Order not found.");
+            }
+            var ids = orderDetails.Items.Select(item => item.ProductId).ToList();
+
+            var products = await _productService.GetProductsByIdsAsync(ids);
+
+            var orderViewModel = new OrderViewModel
+            {
+                DeliveryAddress = orderDetails.DeliveryAddress,
+                Status = orderDetails.Status,
+                TotalPrice = orderDetails.Items.Sum(item => item.Quantity * products.First(p => p.Id == item.ProductId).Price), // Обчислення ціни
+                Items = orderDetails.Items.Select(item => new ProductCartViewModel
+                {
+                    Id = item.ProductId,
+                    Name = products.First(p => p.Id == item.ProductId).Name,
+                    Price = products.First(p => p.Id == item.ProductId).Price,
+                    ImageUrl = products.First(p => p.Id == item.ProductId).Images[0].ImageUrl,
+                    Description = products.First(p => p.Id == item.ProductId).Description,
+                    Quantity = item.Quantity
+                }).ToList()
+            };
+
+            return View(orderViewModel);
+        }
+
 
 
     }
