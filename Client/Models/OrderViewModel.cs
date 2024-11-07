@@ -4,13 +4,14 @@ namespace Client.Models
 {
     public class OrderViewModel
     {
-        public string FirstName { get; set; } // Ім'я користувача
-        public string LastName { get; set; } // Прізвище користувача
-        public string Email { get; set; } // Електронна адреса користувача
-        public AddressDto DeliveryAddress { get; set; } // Адреса доставки
+        public string FirstName { get; set; } 
+        public string LastName { get; set; }
+        public string Email { get; set; } 
+        public AddressDto DeliveryAddress { get; set; } 
         public decimal TotalPrice {get; set; }
+        public string Status {get; set; }
 
-        public List<ProductCartViewModel> Items { get; set; } = new(); // Список товарів у кошику
+        public List<ProductCartViewModel> Items { get; set; } = new(); 
 
     }
 }

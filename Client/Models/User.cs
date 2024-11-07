@@ -2,14 +2,13 @@
 {
     public class User
     {
-        public string Id { get; set; } // Ідентифікатор користувача
-        public string Email { get; set; } // Email користувача
-        public string FirstName { get; set; } // Ім'я користувача
-        public string LastName { get; set; } // Прізвище користувача
-        public string Role { get; set; } // Роль користувача
-        public bool IsAuthenticated { get; set; } // Статус аутентифікації
+        public string Id { get; set; } 
+        public string Email { get; set; } 
+        public string FirstName { get; set; }
+        public string LastName { get; set; } 
+        public string Role { get; set; } 
+        public bool IsAuthenticated { get; set; } 
 
-        // Можна додати конструктор для зручності
         public User()
         {
         }
@@ -24,7 +23,6 @@
             IsAuthenticated = isAuthenticated;
         }
 
-        // Можна додати методи або властивості за потребою
     }
 
 }

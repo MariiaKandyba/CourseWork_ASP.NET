@@ -1,3 +1,4 @@
+using Client.Areas.Services;
 using Client.Models;
 using Client.Services.Auth;
 using Client.Services.Order;
@@ -11,49 +12,32 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 // Add services to the container.
+// Add services to the container.
 builder.Services.AddHttpClient<AuthService>();
 builder.Services.AddHttpClient<ProductService>();
 builder.Services.AddHttpClient<OrderService>();
+builder.Services.AddHttpClient<UserService>();
+builder.Services.AddHttpClient<StockProductService>();
 
-// у файлі Program.cs або Startup.cs
 
-builder.Services.AddDistributedMemoryCache(); // Налаштування кешу
+
+builder.Services.AddDistributedMemoryCache(); 
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Час життя сесії
-    options.Cookie.HttpOnly = true; // Тільки HTTP
-    options.Cookie.IsEssential = true; // Сесія потрібна для програми
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true; 
+    options.Cookie.IsEssential = true; 
 });
 
-//builder.Services.AddAuthentication(options =>
-//{
-//    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-//    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-//})
-//.AddJwtBearer(options =>
-//{
-//    options.RequireHttpsMetadata = false;
-//    options.TokenValidationParameters = new TokenValidationParameters
-//    {
-//        ValidateIssuer = true,
-//        ValidateAudience = true,
-//        ValidateLifetime = true,
-//        ValidateIssuerSigningKey = true,
-//        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-//        ValidAudience = builder.Configuration["Jwt:Audience"],
-//        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-//    };
-//});
 
 builder.Services.AddAuthentication("Cookies")
     .AddCookie("Cookies", options =>
     {
-        options.LoginPath = "/Auth/Login"; // Сторінка логіну
-        options.LogoutPath = "/Auth/Logout"; // Сторінка логауту
-        options.ExpireTimeSpan = TimeSpan.FromHours(1); // Час дії cookies
+        options.LoginPath = "/Auth/Login"; 
+        options.LogoutPath = "/Auth/Logout"; 
+        options.ExpireTimeSpan = TimeSpan.FromHours(1); 
     });
-// В Program.cs
-builder.Services.AddHttpContextAccessor(); // Додаємо IHttpContextAccessor
+builder.Services.AddHttpContextAccessor(); 
 
 
 
@@ -74,6 +58,10 @@ app.UseSession();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
     name: "default",

@@ -1,10 +1,39 @@
 ﻿@using DTOs.Products
-@model List<ProductDto>
+@using System.Linq;
 
+@model List<ProductDto>
 
 <h1 class="text-center my-4">Products</h1>
 
 <div class="container">
+    @if (ViewBag.SelectedCategories != null)
+    {
+        <div class="alert alert-info">
+            Selected Categories: @string.Join(", ", ViewBag.SelectedCategories)
+        </div>
+    }
+
+    <button class="btn btn-info mb-3" id="filterButton">Фільтр</button>
+
+    <div id="filterPanel" style="display:none;">
+        <h4>Choose Categories</h4>
+        <form id="filterForm" method="get" action="@Url.Action("Index", "Products")">
+            <div>
+                <input type="checkbox" name="categories" value="Smartphones" /> Smartphones
+            </div>
+            <div>
+                <input type="checkbox" name="categories" value="Laptops" /> Laptops
+            </div>
+            <div>
+                <input type="checkbox" name="categories" value="Tablets" /> Tablets
+            </div>
+            <div>
+                <input type="checkbox" name="categories" value="Headphones" /> Headphones
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">Застосувати</button>
+        </form>
+    </div>
+
     <div class="row">
         @foreach (var product in Model)
         {
@@ -30,29 +59,33 @@
             </div>
         }
     </div>
+
+    <div class="d-flex justify-content-center my-4">
+        @if (ViewBag.CurrentPage > 1)
+        {
+            <a href="@Url.Action("Index", "Products", new { page = ViewBag.CurrentPage - 1, categories = ViewBag.SelectedCategories })" class="btn btn-primary">Previous</a>
+        }
+
+        <span class="mx-2">Page @ViewBag.CurrentPage of @ViewBag.TotalPages</span>
+
+        @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+        {
+            <a href="@Url.Action("Index", "Products", new { page = ViewBag.CurrentPage + 1, categories = ViewBag.SelectedCategories })" class="btn btn-primary">Next</a>
+        }
+    </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-
     $(document).ready(function () {
-        $.get('@Url.Action("GetCartItems", "Cart")', function (cart) {
-            $('.add-to-cart-btn').each(function () {
-                const productId = $(this).data('product-id');
-                const isProductInCart = cart.some(item => item.productId === productId);
-                if (isProductInCart) {
-                    $(this).text("In Cart")  
-                        .removeClass("btn-primary")
-                        .addClass("btn-success")
-                        .attr("href", '@Url.Action("Index", "Cart")');
-                }
-            });
+        $('#filterButton').click(function () {
+            $('#filterPanel').toggle();
         });
     });
 
     function addToCart(button, productId) {
         const $button = $(button);
-        const isInCart = $button.text() === "In Cart"; // Перевірка, чи товар вже в кошику
+        const isInCart = $button.text() === "In Cart"; 
 
         if (!isInCart) {  
             $.ajax({
@@ -60,7 +93,7 @@
                 type: 'POST',
                 data: { productId: productId },
                 success: function (result) {
-                    $button.text("In Cart") // Зміна тексту кнопки на "In Cart"
+                    $button.text("In Cart") 
                         .removeClass("btn-primary")
                         .addClass("btn-success")
                         .attr("href", '@Url.Action("Index", "Cart")');

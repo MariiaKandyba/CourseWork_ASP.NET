@@ -27,6 +27,37 @@ namespace Client.Services.Products
             var response = await _httpClient.PostAsJsonAsync("https://localhost:7140/gateway/products/batch", productIds);
             return await response.Content.ReadFromJsonAsync<List<ProductDto>>();
         }
+        public async Task<List<ProductDto>> GetPaginatedProductsAsync(int page, int pageSize, List<CategoryDto> сategories)
+        {
+            var url = $"https://localhost:7140/gateway/products/paginated?page={page}&pageSize={pageSize}";
+
+            if (сategories != null && сategories.Any())
+            {
+                var categories = string.Join(",", сategories.Select(c => c.Name)); 
+                url += $"&categories={categories}";
+            }
+
+            var response = await _httpClient.GetAsync(url);
+
+            return await response.Content.ReadFromJsonAsync<List<ProductDto>>();
+        }
+
+
+        public async Task<int> GetTotalProductCountAsync(List<CategoryDto> categories)
+        {
+            var url = "https://localhost:7140/gateway/products/count";
+
+            if (categories != null && categories.Any())
+            {
+                var categories2 = string.Join(",", categories.Select(c => c.Name)); 
+                url += $"?categories={categories2}";
+            }
+
+            var response = await _httpClient.GetAsync(url);
+            return await response.Content.ReadFromJsonAsync<int>();
+        }
+
+
 
     }
 }
