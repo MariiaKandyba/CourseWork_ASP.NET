@@ -44,11 +44,17 @@ namespace Client.Controllers
                 var jwtToken = handler.ReadJwtToken(authResult.Token);
 
                 var claims = jwtToken.Claims.ToList();
+                bool isAdmin = claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
+
 
                 var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
                 var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
                 await HttpContext.SignInAsync("Cookies", claimsPrincipal);
+                if (isAdmin)
+                {
+                    return RedirectToAction("Index", "Home", new { area = "Admin" });
+                }
 
                 return RedirectToAction("Index", "Home");
             }

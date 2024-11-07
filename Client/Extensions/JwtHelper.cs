@@ -10,19 +10,19 @@ namespace Client.Extensions
         {
             if (string.IsNullOrEmpty(token))
             {
-                return null; // Якщо токен відсутній, повертаємо null
+                return null; 
             }
 
             var handler = new JwtSecurityTokenHandler();
 
-            // Перевіряємо, чи токен дійсний
+          
             if (handler.CanReadToken(token))
             {
                 var jwtToken = handler.ReadJwtToken(token);
                 return new ClaimsPrincipal(new ClaimsIdentity(jwtToken.Claims, "jwt"));
             }
 
-            return null; // Якщо токен недійсний, повертаємо null
+            return null; 
         }
 
         public static User GetUser(string token)
