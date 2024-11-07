@@ -1,4 +1,5 @@
-﻿using DTOs.Auth;
+﻿using DTOs.Admin;
+using DTOs.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -104,6 +105,42 @@ namespace UserServiceApi.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        public async Task<List<UserDto>> GetAllUsersAsync()
+        {
+            return await _dbContext.Users
+                .Select(u => new UserDto
+                {
+                    Id = u.Id,
+                    Email = u.Email,
+                    FirstName = u.FirstName,
+                    LastName = u.LastName,
+                    Roles = (List<RoleDto>)u.Roles.Select(c => new RoleDto() { Id = c.Id, Name = c.Name })
+                })
+                .ToListAsync();
+        }
+
+        public async Task<UserDto> GetUserByIdAsync(int userId)
+        {
+            var user = await _dbContext.Users
+                .Where(u => u.Id == userId)
+                .Select(u => new UserDto
+                {
+                    Id = u.Id,
+                    Email = u.Email,
+                    FirstName = u.FirstName,
+                    LastName = u.LastName,
+                    Roles = (List<RoleDto>)u.Roles.Select(c => new RoleDto() { Id = c.Id, Name = c.Name })
+                })
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+                throw new Exception($"User with ID {userId} not found");
+
+            return user;
+        }
+
+      
 
 
     }

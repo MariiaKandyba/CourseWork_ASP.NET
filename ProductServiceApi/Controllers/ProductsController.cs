@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using DTOs.Admin;
 using DTOs.Products;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -118,6 +119,57 @@ namespace ProductServiceApi.Controllers
             }).ToList(); 
 
             return Ok(productDtos); 
+        }
+        [HttpGet("full")]
+        public async Task<ActionResult<IEnumerable<FullProductDto>>> GetFullProducts()
+        {
+            var products = await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.Specifications)
+                .Include(p => p.Images)
+                .Include(p => p.Reviews)
+                .ToListAsync();
+
+            var productDtos = products.Select(p => new FullProductDto
+            {
+                Product = new ProductDto()
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Description = p.Description,
+                    Price = p.Price,
+                    IsAvailable = p.IsAvailable,
+                    Category = new CategoryDto
+                    {
+                        Id = p.Category.Id,
+                        Name = p.Category.Name
+                    },
+                    Brand = new BrandDto
+                    {
+                        Id = p.Brand.Id,
+                        Name = p.Brand.Name
+                    },
+                    Specifications = p.Specifications.Select(s => new SpecificationDto
+                    {
+                        Key = s.Key,
+                        Value = s.Value
+                    }).ToList(),
+                    Images = p.Images.Select(i => new ImageDto
+                    {
+                        ImageUrl = i.ImageUrl
+                    }).ToList(),
+                    Reviews = p.Reviews.Select(r => new ReviewDto
+                    {
+                        Rating = r.Rating,
+                        Comment = r.Comment,
+                        ReviewDate = r.ReviewDate
+                    }).ToList()  
+                }, 
+                StockQuantity = p.Stock 
+            }).ToList();
+
+            return Ok(productDtos);
         }
 
 
@@ -237,6 +289,82 @@ namespace ProductServiceApi.Controllers
         private bool ProductExists(int id)
         {
             return _context.Products.Any(e => e.Id == id);
+        }
+        [HttpGet("count")]
+        public async Task<int> GetTotalProductCount([FromQuery] List<CategoryDto> categories = null)
+        {
+            IQueryable<Product> query = _context.Products;
+
+            if (categories != null && categories.Count > 0)
+            {
+                var categoryNames = categories.Select(c => c.Name).ToList();
+                query = query.Where(p => categoryNames.Contains(p.Category.Name));
+            }
+
+            return await query.CountAsync();
+        }
+
+        [HttpGet("paginated")]
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetPaginatedProducts(
+      [FromQuery] int page = 1,
+      [FromQuery] int pageSize = 10,
+      [FromQuery] List<string> categories = null) 
+        {
+            int skip = (page - 1) * pageSize;
+
+            IQueryable<Product> query = _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.Specifications)
+                .Include(p => p.Images)
+                .Include(p => p.Reviews);
+
+            if (categories != null && categories.Any())
+            {
+                var categoryNames = categories.FirstOrDefault().Split(',').Select(c => c.Trim()).ToList(); 
+                query = query.Where(p => categoryNames.Contains(p.Category.Name));
+            }
+
+            var products = await query
+                .Skip(skip)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var productDtos = products.Select(p => new ProductDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                Price = p.Price,
+                IsAvailable = p.IsAvailable,
+                Category = new CategoryDto
+                {
+                    Id = p.Category.Id,
+                    Name = p.Category.Name
+                },
+                Brand = new BrandDto
+                {
+                    Id = p.Brand.Id,
+                    Name = p.Brand.Name
+                },
+                Specifications = p.Specifications.Select(s => new SpecificationDto
+                {
+                    Key = s.Key,
+                    Value = s.Value
+                }).ToList(),
+                Images = p.Images.Select(i => new ImageDto
+                {
+                    ImageUrl = i.ImageUrl
+                }).ToList(),
+                Reviews = p.Reviews.Select(r => new ReviewDto
+                {
+                    Rating = r.Rating,
+                    Comment = r.Comment,
+                    ReviewDate = r.ReviewDate
+                }).ToList()
+            }).ToList();
+
+            return Ok(productDtos);
         }
     }
 }

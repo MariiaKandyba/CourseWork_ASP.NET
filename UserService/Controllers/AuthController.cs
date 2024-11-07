@@ -1,4 +1,5 @@
-﻿using DTOs.Auth;
+﻿using DTOs.Admin;
+using DTOs.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -79,7 +80,17 @@ namespace UserServiceApi.Controllers
                 IsSuccess = false,
                 ErrorMessage = result.ErrorMessage
             });
-            return BadRequest(result.ErrorMessage);
+        }
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var result = await _userService.GetAllUsersAsync();
+            if (result == null || !result.Any())
+            {
+                return NotFound("No users found.");
+            }
+            
+            return Ok(result);
         }
 
     }

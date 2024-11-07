@@ -13,9 +13,9 @@ namespace UserServiceApi.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>()
-                .HasMany(u => u.Roles) // Навігаційна властивість у класі User
-                .WithMany(r => r.Users) // Навігаційна властивість у класі Role
-                .UsingEntity(j => j.ToTable("UserRoles")); // Назва проміжної таблиці
+                .HasMany(u => u.Roles) 
+                .WithMany(r => r.Users) 
+                .UsingEntity(j => j.ToTable("UserRoles")); 
 
             modelBuilder.Entity<User>().HasData(
                 new User { Id = 1, FirstName = "Admin", LastName = "User", Email = "admin@example.com", PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin")},

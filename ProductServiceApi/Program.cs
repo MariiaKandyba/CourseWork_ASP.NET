@@ -13,9 +13,9 @@ builder.Services.AddDbContext<ProductDbContext>(options =>
         sqlOptions =>
         {
             sqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 5, // Максимальна кількість спроб
-                maxRetryDelay: TimeSpan.FromSeconds(10), // Затримка між спробами
-                errorNumbersToAdd: null // Додаткові коди помилок (null = усі)
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(10), 
+                errorNumbersToAdd: null 
             );
         }));
 
