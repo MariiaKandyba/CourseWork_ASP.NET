@@ -9,7 +9,7 @@ namespace OrderServiceApi.Services
 {
     public class OrderService : IOrderService
     {
-        private readonly HttpClient _httpClient; 
+        private readonly HttpClient _httpClient;
         private readonly OrderDbContext _context;
 
         public OrderService(OrderDbContext context, HttpClient httpClient)
@@ -49,17 +49,26 @@ namespace OrderServiceApi.Services
         {
             var order = await _context.Orders
                 .Include(o => o.OrderItems)
-                .Include(o => o.Address) // Додаємо включення адреси
+                .Include(o => o.Address)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
 
             return MapToDto(order);
         }
 
-
         public async Task<List<OrderDto>> GetOrdersByUserIdAsync(int userId)
         {
             var orders = await _context.Orders
                 .Where(o => o.IdUser == userId)
+                .Include(o => o.OrderItems)
+                .Include(o => o.Address)
+                .ToListAsync();
+
+            return orders.Select(MapToDto).ToList();
+        }
+
+        public async Task<List<OrderDto>> GetAllOrdersAsync()
+        {
+            var orders = await _context.Orders
                 .Include(o => o.OrderItems)
                 .Include(o => o.Address)
                 .ToListAsync();
@@ -93,11 +102,6 @@ namespace OrderServiceApi.Services
             };
         }
 
-        public async Task<List<ProductDto>> GetProductsByIdsAsync(List<int> productIds)
-        {
-            var response = await _httpClient.PostAsJsonAsync("https://localhost:7140/gateway/products/batch", productIds);
-            return await response.Content.ReadFromJsonAsync<List<ProductDto>>();
-        }
+       
     }
-
 }

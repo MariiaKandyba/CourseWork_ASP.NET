@@ -8,6 +8,8 @@ namespace OrderServiceApi.Services
         Task<OrderDto> CreateOrder(int userId, List<OrderItemDto> items, AddressDto deliveryAddress);
         Task<OrderDto> GetOrderByIdAsync(int orderId);
         Task<List<OrderDto>> GetOrdersByUserIdAsync(int userId);
+        Task<List<OrderDto>> GetAllOrdersAsync();
+
     }
 
 }

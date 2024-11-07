@@ -14,6 +14,9 @@ builder.Services.AddHttpClient();
 builder.Services.AddDbContext<OrderDbContext>(options => options
 .UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")).EnableSensitiveDataLogging());
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddHttpClient<ProductService>();
+builder.Services.AddHttpClient<UserService>();
+
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
