@@ -2,90 +2,113 @@
 @model List<FullProductDto>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Full Product List</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
 </head>
 <body>
-    <h1>Product List</h1>
+    <div class="container my-5">
+        <h1 class="text-center mb-4">Product List</h1>
 
-    <table border="1" cellpadding="10">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Price</th>
-                <th>Is Available</th>
-                <th>Category</th>
-                <th>Brand</th>
-                <th>Specifications</th>
-                <th>Images</th>
-                <th>Reviews</th>
-                <th>Stock Quantity</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var fullProduct in Model)
-            {
-                <tr>
-                    <td>@fullProduct.Product.Id</td>
-                    <td>@fullProduct.Product.Name</td>
-                    <td>@fullProduct.Product.Description</td>
-                    <td>@fullProduct.Product.Price.ToString("C")</td>
-                    <td>@(fullProduct.Product.IsAvailable ? "Yes" : "No")</td>
-                    <td>@fullProduct.Product.Category?.Name</td>
-                    <td>@fullProduct.Product.Brand?.Name</td>
-                    <td>
-                        @if (fullProduct.Product.Specifications != null && fullProduct.Product.Specifications.Any())
-                        {
-                            <ul>
-                                @foreach (var spec in fullProduct.Product.Specifications)
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <a href="/Admin/StockProducts/Create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Add Product
+            </a>
+        </div>
+
+        @if (Model == null || !Model.Any())
+        {
+            <div class="alert alert-info text-center">
+                No products available.
+            </div>
+        }
+        else
+        {
+            <table class="table table-hover table-bordered align-middle">
+                <thead class="table-light text-center">
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Price</th>
+                        <th>Availability</th>
+                        <th>Category</th>
+                        <th>Brand</th>
+                        <th>Specifications</th>
+                        <th>Images</th>
+                        <th>Stock Quantity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var fullProduct in Model)
+                    {
+                        <tr>
+                            <td>@fullProduct.Product.Name</td>
+                            <td>@fullProduct.Product.Description</td>
+                            <td>@fullProduct.Product.Price.ToString("C")</td>
+                            <td class="text-center">
+                                @if (fullProduct.Product.IsAvailable)
                                 {
-                                    <li>@spec.Key: @spec.Value</li>
+                                    <span class="badge bg-success">Available</span>
                                 }
-                            </ul>
-                        }
-                        else
-                        {
-                            <p>No specifications available</p>
-                        }
-                    </td>
-                    <td>
-                        @if (fullProduct.Product.Images != null && fullProduct.Product.Images.Any())
-                        {
-                            <ul>
-                                @foreach (var image in fullProduct.Product.Images)
+                                else
                                 {
-                                    <li><img src="@image.ImageUrl" alt="Product Image" width="100" /></li>
+                                    <span class="badge bg-danger">Out of Stock</span>
                                 }
-                            </ul>
-                        }
-                        else
-                        {
-                            <p>No images available</p>
-                        }
-                    </td>
-                    <td>
-                        @if (fullProduct.Product.Reviews != null && fullProduct.Product.Reviews.Any())
-                        {
-                            <ul>
-                                @foreach (var review in fullProduct.Product.Reviews)
+                            </td>
+                            <td>@fullProduct.Product.Category?.Name</td>
+                            <td>@fullProduct.Product.Brand?.Name</td>
+                            <td>
+                                @if (fullProduct.Product.Specifications?.Any() == true)
                                 {
-                                    <li>Rating: @review.Rating, Comment: @review.Comment, Date: @review.ReviewDate.ToShortDateString()</li>
+                                    <ul class="list-unstyled mb-0">
+                                        @foreach (var spec in fullProduct.Product.Specifications)
+                                        {
+                                            <li><strong>@spec.Key:</strong> @spec.Value</li>
+                                        }
+                                    </ul>
                                 }
-                            </ul>
-                        }
-                        else
-                        {
-                            <p>No reviews available</p>
-                        }
-                    </td>
-                    <td>@fullProduct.StockQuantity</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+                                else
+                                {
+                                    <em>No specifications available</em>
+                                }
+                            </td>
+                            <td>
+                                @if (fullProduct.Product.Images?.Any() == true)
+                                {
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach (var image in fullProduct.Product.Images)
+                                        {
+                                            <img src="@image.ImageUrl" alt="Product Image" class="img-thumbnail" width="75" />
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <em>No images available</em>
+                                }
+                            </td>
+                            <td class="text-center">@fullProduct.StockQuantity</td>
+                            <td class="text-center">
+                                <a href="/Admin/StockProducts/Details/@fullProduct.Product.Id" class="btn btn-info btn-sm me-1">Details</a>
+                                <a href="/Admin/StockProducts/Edit/@fullProduct.Product.Id" class="btn btn-warning btn-sm me-1">Edit</a>
+                                <form asp-action="Delete" asp-controller="StockProducts" asp-area="Admin" method="post" style="display:inline;" asp-antiforgery="true">
+                                    <input type="hidden" name="id" value="@fullProduct.Product.Id" />
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this product?');">
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

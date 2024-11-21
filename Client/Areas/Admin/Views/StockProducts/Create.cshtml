@@ -1,0 +1,73 @@
+﻿@model DTOs.Admin.ProductCreateDto
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Product</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+</head>
+<body>
+    <div class="container my-5">
+        <h2 class="text-center mb-4">Create Product</h2>
+
+        <form asp-action="Create" method="post" class="row g-3" asp-antiforgery="true">
+            <div class="col-md-6">
+                <label for="Name" class="form-label">Name</label>
+                <input type="text" id="Name" class="form-control" asp-for="Name" required />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label for="Description" class="form-label">Description</label>
+                <input type="text" id="Description" class="form-control" asp-for="Description" />
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label for="Price" class="form-label">Price</label>
+                <input type="number" id="Price" class="form-control" asp-for="Price" step="0.01" required />
+                <span asp-validation-for="Price" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Available</label>
+                <div class="form-check">
+                    <input type="checkbox" id="IsAvailable" class="form-check-input" asp-for="IsAvailable" />
+                    <label for="IsAvailable" class="form-check-label">Yes</label>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label for="Category" class="form-label">Category</label>
+                <select id="Category" class="form-select" asp-for="CategoryId" asp-items="ViewBag.Categories"></select>
+                <span asp-validation-for="CategoryId" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label for="Brand" class="form-label">Brand</label>
+                <select id="Brand" class="form-select" asp-for="BrandId" asp-items="ViewBag.Brands"></select>
+                <span asp-validation-for="BrandId" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-12">
+                <label for="ImageUrl" class="form-label">Image URL</label>
+                <input type="url" id="ImageUrl" class="form-control" asp-for="Images[0].ImageUrl" />
+                <span asp-validation-for="Images[0].ImageUrl" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label for="StockQuantity" class="form-label">Stock Quantity</label>
+                <input type="number" id="StockQuantity" class="form-control" asp-for="StockQuantity" required />
+                <span asp-validation-for="StockQuantity" class="text-danger"></span>
+            </div>
+
+            <div class="col-12 text-center">
+                <button type="submit" class="btn btn-primary btn-lg">Create Product</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

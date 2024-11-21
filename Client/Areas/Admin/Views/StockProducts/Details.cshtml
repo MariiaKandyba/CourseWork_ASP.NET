@@ -1,0 +1,46 @@
+﻿@using DTOs.Admin
+@model FullProductDto
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Product Details</title>
+</head>
+<body>
+    <h1>Product Details</h1>
+
+    <div>
+        <h2>@Model.Product.Name</h2>
+        <p><strong>Description:</strong> @Model.Product.Description</p>
+        <p><strong>Price:</strong> @Model.Product.Price.ToString("C")</p>
+        <p><strong>Available:</strong> @(Model.Product.IsAvailable ? "Yes" : "No")</p>
+        <p><strong>Category:</strong> @Model.Product.Category?.Name</p>
+        <p><strong>Brand:</strong> @Model.Product.Brand?.Name</p>
+        <p><strong>Stock Quantity:</strong> @Model.StockQuantity</p>
+        @if (Model.Product.Specifications != null && Model.Product.Specifications.Any())
+        {
+            <h3>Specifications</h3>
+            <ul>
+                @foreach (var spec in Model.Product.Specifications)
+                {
+                    <li>@spec.Key: @spec.Value</li>
+                }
+            </ul>
+        }
+        @if (Model.Product.Images != null && Model.Product.Images.Any())
+        {
+            <h3>Images</h3>
+            <ul>
+                @foreach (var image in Model.Product.Images)
+                {
+                    <li><img src="@image.ImageUrl" alt="Product Image" width="150" /></li>
+                }
+            </ul>
+        }
+        <br />
+        <a href="/Admin/StockProducts/Edit/@Model.Product.Id">Edit</a> |
+        <a href="/Admin/StockProducts">Back to List</a>
+    </div>
+</body>
+</html>
