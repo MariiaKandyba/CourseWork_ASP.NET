@@ -4,367 +4,172 @@ using System.Linq;
 using System.Threading.Tasks;
 using DTOs.Admin;
 using DTOs.Products;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProductServiceApi.Data;
 using ProductServiceApi.Models;
+using ProductServiceApi.Services;
 
 namespace ProductServiceApi.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
     public class ProductsController : ControllerBase
     {
-        private readonly ProductDbContext _context;
+        private readonly IProductService _productService;
 
-        public ProductsController(ProductDbContext context)
+        public ProductsController(IProductService productService)
         {
-            _context = context;
+            _productService = productService;
         }
+        
         [HttpPost("batch")]
         public async Task<ActionResult<IEnumerable<ProductDto>>> GetProductsByIds([FromBody] List<int> ids)
         {
-            var products = await _context.Products
-                .Where(p => ids.Contains(p.Id))
-                .Include(p => p.Category)
-                .Include(p => p.Brand)
-                .Include(p => p.Specifications)
-                .Include(p => p.Images)
-                .Include(p => p.Reviews)
-                .ToListAsync();
-
-            var productDtos = products.Select(p => new ProductDto
+            if (ids == null || !ids.Any())
             {
-                Id = p.Id,
-                Name = p.Name,
-                Description = p.Description,
-                Price = p.Price,
-                IsAvailable = p.IsAvailable,
-                Category = new CategoryDto
-                {
-                    Id = p.Category.Id,
-                    Name = p.Category.Name
-                },
-                Brand = new BrandDto
-                {
-                    Id = p.Brand.Id,
-                    Name = p.Brand.Name
-                },
-                Specifications = p.Specifications.Select(s => new SpecificationDto
-                {
-                    Key = s.Key,
-                    Value = s.Value
-                }).ToList(),
-                Images = p.Images.Select(i => new ImageDto
-                {
-                    ImageUrl = i.ImageUrl
-                }).ToList(),
-                Reviews = p.Reviews.Select(r => new ReviewDto
-                {
-                    Rating = r.Rating,
-                    Comment = r.Comment,
-                    ReviewDate = r.ReviewDate
-                }).ToList()
-            }).ToList();
+                return BadRequest("Cannot be empty");
+            }
 
+            var productDtos = await _productService.GetProductsByIdsAsync(ids);
             return Ok(productDtos);
         }
 
+        [HttpPost("reviews")]
+        public async Task<ActionResult<IEnumerable<ProductDto>>> PostReview([FromBody] ReviewDto review)
+        {
+            if (review == null)
+            {
+                return BadRequest("Cannot be empty");
+            }
 
-        // GET: api/Products
+            var rev = await _productService.CreateReviewAsync(review);
+            return Ok(rev);
+        }
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts()
         {
-            var products = await _context.Products
-                .Include(p => p.Category)
-                .Include(p => p.Brand)
-                .Include(p => p.Specifications)
-                .Include(p => p.Images)
-                .Include(p => p.Reviews)
-                .ToListAsync();
-
-            var productDtos = products.Select(p => new ProductDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Description = p.Description,
-                Price = p.Price,
-                IsAvailable = p.IsAvailable,
-                Category = new CategoryDto
-                {
-                    Id = p.Category.Id,
-                    Name = p.Category.Name
-                },
-                Brand = new BrandDto
-                {
-                    Id = p.Brand.Id,
-                    Name = p.Brand.Name
-                },
-                Specifications = p.Specifications.Select(s => new SpecificationDto
-                {
-                    Key = s.Key,
-                    Value = s.Value
-                }).ToList(),
-                Images = p.Images.Select(i => new ImageDto
-                {
-                    ImageUrl = i.ImageUrl
-                }).ToList(),
-                Reviews = p.Reviews.Select(r => new ReviewDto
-                {
-                    Rating = r.Rating,
-                    Comment = r.Comment,
-                    ReviewDate = r.ReviewDate
-                }).ToList()
-            }).ToList(); 
-
-            return Ok(productDtos); 
+            var productDtos = await _productService.GetAllProductsAsync();
+            return Ok(productDtos);
         }
+
+        [Authorize(Roles ="Admin")]
         [HttpGet("full")]
         public async Task<ActionResult<IEnumerable<FullProductDto>>> GetFullProducts()
         {
-            var products = await _context.Products
-                .Include(p => p.Category)
-                .Include(p => p.Brand)
-                .Include(p => p.Specifications)
-                .Include(p => p.Images)
-                .Include(p => p.Reviews)
-                .ToListAsync();
-
-            var productDtos = products.Select(p => new FullProductDto
-            {
-                Product = new ProductDto()
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Description = p.Description,
-                    Price = p.Price,
-                    IsAvailable = p.IsAvailable,
-                    Category = new CategoryDto
-                    {
-                        Id = p.Category.Id,
-                        Name = p.Category.Name
-                    },
-                    Brand = new BrandDto
-                    {
-                        Id = p.Brand.Id,
-                        Name = p.Brand.Name
-                    },
-                    Specifications = p.Specifications.Select(s => new SpecificationDto
-                    {
-                        Key = s.Key,
-                        Value = s.Value
-                    }).ToList(),
-                    Images = p.Images.Select(i => new ImageDto
-                    {
-                        ImageUrl = i.ImageUrl
-                    }).ToList(),
-                    Reviews = p.Reviews.Select(r => new ReviewDto
-                    {
-                        Rating = r.Rating,
-                        Comment = r.Comment,
-                        ReviewDate = r.ReviewDate
-                    }).ToList()  
-                }, 
-                StockQuantity = p.Stock 
-            }).ToList();
-
+            var productDtos = await _productService.GetFullProductsAsync();
             return Ok(productDtos);
         }
 
 
-        // GET: api/Products/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<ProductDto>> GetProduct(int id)
-        {
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .Include(p => p.Brand)
-                .Include(p => p.Specifications)
-                .Include(p => p.Images)
-                .Include(p => p.Reviews)
-                .FirstOrDefaultAsync(p => p.Id == id);
 
-            if (product == null)
+
+        [HttpGet("full/{id}")]
+        [Authorize(Roles = "Admin")]
+
+        public async Task<ActionResult<FullProductDto>> GetFullProductById(int id)
+        {
+            var productDto = await _productService.GetFullProductByIdAsync(id);
+            if (productDto == null)
             {
                 return NotFound();
             }
+            return Ok(productDto);
+        }
 
-            var productDto = new ProductDto
+        [HttpGet("{id}")]
+
+        public async Task<ActionResult<ProductDto>> GetProduct(int id)
+        {
+            var productDto = await _productService.GetProductByIdAsync(id);
+            if (productDto == null)
             {
-                Id = product.Id,
-                Name = product.Name,
-                Description = product.Description,
-                Price = product.Price,
-                IsAvailable = product.IsAvailable,
-                Category = new CategoryDto
-                {
-                    Id = product.Category.Id,
-                    Name = product.Category.Name
-                },
-                Brand = new BrandDto
-                {
-                    Id = product.Brand.Id,
-                    Name = product.Brand.Name
-                },
-                Specifications = product.Specifications.Select(s => new SpecificationDto
-                {
-                    Key = s.Key,
-                    Value = s.Value
-                }).ToList(),
-                Images = product.Images.Select(i => new ImageDto
-                {
-                    ImageUrl = i.ImageUrl
-                }).ToList(),
-                Reviews = product.Reviews.Select(r => new ReviewDto
-                {
-                    Rating = r.Rating,
-                    Comment = r.Comment,
-                    ReviewDate = r.ReviewDate
-                }).ToList()
-            };
-
+                return NotFound();
+            }
             return Ok(productDto);
         }
 
 
-        // PUT: api/Products/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutProduct(int id, Product product)
+        [Authorize(Roles = "Admin")]
+
+        public async Task<IActionResult> PutProduct(int id, ProductEditDto productEditDto)
         {
-            if (id != product.Id)
+            if (productEditDto == null)
             {
-                return BadRequest();
+                return BadRequest("Invalid product data.");
             }
 
-            _context.Entry(product).State = EntityState.Modified;
-
-            try
+            if (id != productEditDto.Id)
             {
-                await _context.SaveChangesAsync();
+                return BadRequest("Product ID mismatch.");
             }
-            catch (DbUpdateConcurrencyException)
+
+            var result = await _productService.UpdateProductAsync(id, productEditDto);
+
+            if (!result)
             {
-                if (!ProductExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound("Product not found.");
             }
 
             return NoContent();
         }
 
-        // POST: api/Products
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Product>> PostProduct(Product product)
-        {
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetProduct", new { id = product.Id }, product);
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+
+        public async Task<ActionResult<ProductDto>> PostProduct(ProductCreateDto fullProductDto)
+        {
+            if (fullProductDto == null)
+            {
+                return BadRequest("Invalid product data.");
+            }
+
+            var createdProductDto = await _productService.CreateProductAsync(fullProductDto);
+
+            if (createdProductDto == null)
+            {
+                return BadRequest("Category or Brand not found.");
+            }
+
+            return CreatedAtAction("GetProduct", new { id = createdProductDto.Id }, createdProductDto);
         }
 
-        // DELETE: api/Products/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> DeleteProduct(int id)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null)
-            {
-                return NotFound();
-            }
+            var isDeleted = await _productService.DeleteProductAsync(id);
 
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
+            if (!isDeleted)
+            {
+                return NotFound("Product not found");
+            }
 
             return NoContent();
         }
 
-        private bool ProductExists(int id)
-        {
-            return _context.Products.Any(e => e.Id == id);
-        }
+
+
         [HttpGet("count")]
-        public async Task<int> GetTotalProductCount([FromQuery] List<CategoryDto> categories = null)
+        public async Task<int> GetTotalProductCount([FromQuery] string categories = null)
         {
-            IQueryable<Product> query = _context.Products;
-
-            if (categories != null && categories.Count > 0)
-            {
-                var categoryNames = categories.Select(c => c.Name).ToList();
-                query = query.Where(p => categoryNames.Contains(p.Category.Name));
-            }
-
-            return await query.CountAsync();
+            return await _productService.GetTotalProductCountAsync(categories);
         }
 
         [HttpGet("paginated")]
-        public async Task<ActionResult<IEnumerable<ProductDto>>> GetPaginatedProducts(
-      [FromQuery] int page = 1,
-      [FromQuery] int pageSize = 10,
-      [FromQuery] List<string> categories = null) 
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetPaginatedProducts([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] List<string> categories = null)
         {
-            int skip = (page - 1) * pageSize;
-
-            IQueryable<Product> query = _context.Products
-                .Include(p => p.Category)
-                .Include(p => p.Brand)
-                .Include(p => p.Specifications)
-                .Include(p => p.Images)
-                .Include(p => p.Reviews);
-
-            if (categories != null && categories.Any())
-            {
-                var categoryNames = categories.FirstOrDefault().Split(',').Select(c => c.Trim()).ToList(); 
-                query = query.Where(p => categoryNames.Contains(p.Category.Name));
-            }
-
-            var products = await query
-                .Skip(skip)
-                .Take(pageSize)
-                .ToListAsync();
-
-            var productDtos = products.Select(p => new ProductDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Description = p.Description,
-                Price = p.Price,
-                IsAvailable = p.IsAvailable,
-                Category = new CategoryDto
-                {
-                    Id = p.Category.Id,
-                    Name = p.Category.Name
-                },
-                Brand = new BrandDto
-                {
-                    Id = p.Brand.Id,
-                    Name = p.Brand.Name
-                },
-                Specifications = p.Specifications.Select(s => new SpecificationDto
-                {
-                    Key = s.Key,
-                    Value = s.Value
-                }).ToList(),
-                Images = p.Images.Select(i => new ImageDto
-                {
-                    ImageUrl = i.ImageUrl
-                }).ToList(),
-                Reviews = p.Reviews.Select(r => new ReviewDto
-                {
-                    Rating = r.Rating,
-                    Comment = r.Comment,
-                    ReviewDate = r.ReviewDate
-                }).ToList()
-            }).ToList();
-
+            var productDtos = await _productService.GetPaginatedProducts(page, pageSize, categories);
             return Ok(productDtos);
+
         }
     }
+   
 }
+

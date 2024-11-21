@@ -20,7 +20,6 @@ namespace ProductServiceApi.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Fluent API configurations
             modelBuilder.Entity<Product>()
                 .HasOne(p => p.Category)
                 .WithMany(c => c.Products)
