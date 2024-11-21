@@ -13,7 +13,6 @@
         public DateTime UpdatedDate { get; set; } = DateTime.UtcNow;
         public bool IsAvailable { get; set; } = true;
 
-        // Navigation properties
         public Category Category { get; set; } = null!;
         public Brand Brand { get; set; } = null!;
         public ICollection<ProductSpecification> Specifications { get; set; } = new List<ProductSpecification>();

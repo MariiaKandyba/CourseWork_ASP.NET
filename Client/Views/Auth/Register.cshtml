@@ -1,25 +1,40 @@
 ﻿@using DTOs.Auth
 @model RegisterDto
 
-<h2>Реєстрація</h2>
-<form asp-action="Register" method="post">
-    <label>Email:</label>
-    <input type="email" asp-for="Email" required />
-    <label>Password:</label>
-    <input type="password" asp-for="Password" required />
-    <label>First Name:</label>
-    <input type="text" asp-for="FirstName" required />
-    <label>Last Name:</label>
-    <input type="text" asp-for="LastName" required />
-    <button type="submit">Зареєструватись</button>
-</form>
+<div class="container">
+    <h2 class="text-center my-6">Signing in</h2>
 
-@if (!ViewData.ModelState.IsValid)
-{
-    <div class="text-danger">
-        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-        {
-            <p>@error.ErrorMessage</p>
-        }
-    </div>
-}
+    <form asp-action="Register" method="post" class="col-md-6 offset-md-3 mb-5" accept-charset="UTF-8" asp-antiforgery="true">
+        <div class="form-group">
+            <label for="Email">Email:</label>
+            <input type="email" id="Email" asp-for="Email" class="form-control" required />
+        </div>
+
+        <div class="form-group">
+            <label for="Password">Password:</label>
+            <input type="password" id="Password" asp-for="Password" class="form-control" required />
+        </div>
+
+        <div class="form-group">
+            <label for="FirstName">First Name:</label>
+            <input type="text" id="FirstName" asp-for="FirstName" class="form-control" required />
+        </div>
+
+        <div class="form-group">
+            <label for="LastName">Last Name:</label>
+            <input type="text" id="LastName" asp-for="LastName" class="form-control" required />
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+    </form>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger mt-3">
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <p>@error.ErrorMessage</p>
+            }
+        </div>
+    }
+</div>

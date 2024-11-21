@@ -8,7 +8,6 @@ namespace ProductServiceApi.Models
         public string Name { get; set; } = null!;
         public string? Description { get; set; }
 
-        // Navigation property
         [JsonIgnore]
         public ICollection<Product> Products { get; set; } = new List<Product>();
     }

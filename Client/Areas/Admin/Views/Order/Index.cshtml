@@ -1,0 +1,287 @@
+﻿@using DTOs.Admin
+@model List<FullOrderDto>
+
+<div class="filter-container">
+    <label for="order-status-filter">Filter by Status:</label>
+    <select id="order-status-filter" class="form-select">
+        <option value="All">All</option>
+        <option value="Pending">Pending</option>
+        <option value="Shipped">Shipped</option>
+        <option value="Delivered">Delivered</option>
+        <option value="Cancelled">Cancelled</option>
+    </select>
+    <label for="order-search" style="margin-left: 20px;">Search:</label>
+    <input type="text" id="order-search" class="form-input" placeholder="Search by ID, Name, or Email" />
+</div>
+
+<div class="order-container">
+    @foreach (var order in Model.Select((order, index) => new { order, index }))
+    {
+        <div class="order-card" id="order-card-@order.order.Id" 
+        data-status="@order.order.Status" style="background-color: @(GetCardColor(@order.order.Status))"
+             data-id="@order.order.Id" data-name="@order.order.User?.FirstName @order.order.User?.LastName" 
+             data-email="@order.order.User?.Email">
+            <div class="order-header">
+                <h3>Order ID: @order.order.Id</h3>
+                <p><strong>Status:</strong> @order.order.Status</p>
+            </div>
+            <div class="order-details">
+                <p><strong>Created At:</strong> @order.order.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</p>
+                <p><strong>User:</strong> @(order.order.User != null ? $"{order.order.User.FirstName} {order.order.User.LastName}" : "N/A")</p>
+                <p><strong>Email:</strong> @(order.order.User != null ? order.order.User.Email : "N/A")</p>
+
+            </div>
+
+            <h4>Delivery Address:</h4>
+            <p>@order.order.DeliveryAddress.Street, @order.order.DeliveryAddress.City, @order.order.DeliveryAddress.ZipCode, @order.order.DeliveryAddress.Country</p>
+
+            <h4>Items:</h4>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Total Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in order.order.Items)
+                    {
+                        <tr>
+                            <td>
+                                <p>@item.Item.Name</p>
+                                <p>@item.Item.Description</p>
+                                <img src="@item.Item.Images.FirstOrDefault()?.ImageUrl" alt="@item.Item.Name" class="product-image" />
+                            </td>
+                            <td>@item.Quantity</td>
+                            <td>@item.Price.ToString("C")</td>
+                            <td>@(item.Price * item.Quantity)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <h4>Total Price: @order.order.TotalPrice.ToString("C")</h4>
+
+            <div class="order-actions">
+                <select asp-for="@order.order.Status" class="form-select" data-order-id="@order.order.Id">
+                    <option value="Pending">Pending</option>
+                    <option value="Shipped">Shipped</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+                <button type="button" class="btn btn-primary update-status" data-order-id="@order.order.Id">Update Status</button>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .filter-container {
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: flex-start;
+        gap: 10px;
+        align-items: center;
+    }
+
+        .filter-container label {
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+    .form-select {
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        width: 180px;
+    }
+
+    .order-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+        width: 100%; 
+    }
+
+    .order-card {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 16px;
+        width: 100%;
+        max-width: 100%; 
+        height: auto;
+        transition: background-color 0.3s ease;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .order-details {
+        margin-top: 12px;
+    }
+
+    h4 {
+        margin-top: 20px;
+        font-size: 1.1rem;
+        font-weight: bold;
+    }
+
+    .product-image {
+        width: 100px;
+        height: auto;
+        margin-top: 8px;
+        object-fit: cover;
+    }
+
+    .order-actions {
+        margin-top: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .form-select {
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        width: 180px;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+    .table {
+        width: 100%;
+        margin-top: 12px;
+        border-collapse: collapse;
+    }
+
+        .table th, .table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .table th {
+            background-color: #f4f4f4;
+        }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const statusFilter = document.getElementById('order-status-filter');
+         const orderSearch = document.getElementById('order-search');
+            const orderCards = document.querySelectorAll('.order-card');
+
+        statusFilter.addEventListener('change', function() {
+            const selectedStatus = statusFilter.value;
+
+            orderCards.forEach(card => {
+                const cardStatus = card.getAttribute('data-status');
+                if (selectedStatus === 'All' || cardStatus === selectedStatus) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+           orderSearch.addEventListener('input', function() {
+        const searchTerm = orderSearch.value.toLowerCase();
+        orderCards.forEach(card => {
+            const cardId = card.getAttribute('data-id').toString();
+            const cardName = card.getAttribute('data-name').toLowerCase();
+            const cardEmail = card.getAttribute('data-email').toLowerCase();
+
+            if (cardId.includes(searchTerm) || cardName.includes(searchTerm) || cardEmail.includes(searchTerm)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+
+
+        document.querySelectorAll('.update-status').forEach(button => {
+            button.addEventListener('click', async function() {
+                const orderId = this.getAttribute('data-order-id');
+                const newStatus = this.previousElementSibling.value;
+
+                try {
+                    const response = await fetch('/Admin/Order/UpdateOrderStatus', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ orderId, newStatus })
+                    });
+
+                    const result = await response.json();
+                    alert(result.message || 'Status updated');
+
+                    const orderCard = document.getElementById(`order-card-${orderId}`);
+                    const newColor = GetCardColor(newStatus); 
+                    orderCard.style.backgroundColor = newColor; 
+                    orderCard.setAttribute('data-status', newStatus);
+                } catch (error) {
+                    console.error('Error updating order status:', error);
+                    alert('Error updating status');
+                }
+            });
+        });
+    });
+
+    function GetCardColor(status) {
+        switch(status) {
+            case 'Pending':
+                return '#f0f8ff'; 
+            case 'Shipped':
+                return '#ffebcd'; 
+            case 'Delivered':
+                return '#98fb98';
+            case 'Cancelled':
+                return '#ffcccb'; 
+            default:
+                return '#f9f9f9'; 
+        }
+    }
+</script>
+
+@functions {
+    public string GetCardColor(string status)
+    {
+        switch (status)
+        {
+            case "Pending":
+                return "#f0f8ff"; 
+            case "Shipped":
+                return "#ffebcd"; 
+            case "Delivered":
+                return "#98fb98"; 
+            case "Cancelled":
+                return "#ffcccb"; 
+            default:
+                return "#f9f9f9"; 
+        }
+    }
+}

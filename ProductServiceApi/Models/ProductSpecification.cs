@@ -7,7 +7,6 @@
         public string Key { get; set; } = null!;
         public string Value { get; set; } = null!;
 
-        // Navigation property
         public Product Product { get; set; } = null!;
     }
 }

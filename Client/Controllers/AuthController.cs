@@ -3,6 +3,7 @@ using Client.Models;
 using Client.Services.Auth;
 using DTOs.Auth;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
@@ -10,6 +11,7 @@ using System.Security.Claims;
 
 namespace Client.Controllers
 {
+
     public class AuthController : Controller
     {
         private readonly AuthService _authService;
@@ -23,6 +25,7 @@ namespace Client.Controllers
         public IActionResult Login() => View();
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginDto model)
         {
             if (ModelState.IsValid)
@@ -44,11 +47,17 @@ namespace Client.Controllers
                 var jwtToken = handler.ReadJwtToken(authResult.Token);
 
                 var claims = jwtToken.Claims.ToList();
+                bool isAdmin = claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
+
 
                 var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
                 var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
                 await HttpContext.SignInAsync("Cookies", claimsPrincipal);
+                if (isAdmin)
+                {
+                    return RedirectToAction("Index", "Home", new { area = "Admin" });
+                }
 
                 return RedirectToAction("Index", "Home");
             }
@@ -66,6 +75,8 @@ namespace Client.Controllers
         public IActionResult Register() => View();
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
+
         public async Task<IActionResult> Register(RegisterDto model)
         {
             if (ModelState.IsValid)
@@ -133,6 +144,8 @@ namespace Client.Controllers
 
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
+
         public async Task<IActionResult> UpdateProfile(UpdateDto model)
         {
             if (ModelState.IsValid)
