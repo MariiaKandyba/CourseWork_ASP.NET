@@ -9,9 +9,8 @@ namespace Client.Areas.Admin.Controllers
     {
         public IActionResult Index()
         {
-            
-
             return View();
         }
+
     }
 }
