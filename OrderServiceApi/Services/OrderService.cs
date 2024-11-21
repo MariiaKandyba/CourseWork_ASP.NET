@@ -9,17 +9,41 @@ namespace OrderServiceApi.Services
 {
     public class OrderService : IOrderService
     {
-        private readonly HttpClient _httpClient;
         private readonly OrderDbContext _context;
 
-        public OrderService(OrderDbContext context, HttpClient httpClient)
+        public OrderService(OrderDbContext context)
         {
             _context = context;
-            _httpClient = httpClient;
         }
 
         public async Task<OrderDto> CreateOrder(int userId, List<OrderItemDto> items, AddressDto deliveryAddress)
         {
+            var existingAddress = await _context.Addresses
+                .FirstOrDefaultAsync(a => a.Street == deliveryAddress.Street &&
+                                          a.City == deliveryAddress.City &&
+                                          a.ZipCode == deliveryAddress.ZipCode &&
+                                          a.Country == deliveryAddress.Country);
+
+            Address addressToUse;
+
+            if (existingAddress != null)
+            {
+                addressToUse = existingAddress;
+            }
+            else
+            {
+                addressToUse = new Address()
+                {
+                    Country = deliveryAddress.Country,
+                    City = deliveryAddress.City,
+                    Street = deliveryAddress.Street,
+                    ZipCode = deliveryAddress.ZipCode
+                };
+
+                _context.Add(addressToUse);
+                await _context.SaveChangesAsync();
+            }
+
             var order = new Order
             {
                 IdUser = userId,
@@ -30,13 +54,7 @@ namespace OrderServiceApi.Services
                 }).ToList(),
                 CreatedAt = DateTime.UtcNow,
                 Status = OrderStatus.Pending,
-                Address = new Address()
-                {
-                    Country = deliveryAddress.Country,
-                    City = deliveryAddress.City,
-                    Street = deliveryAddress.Street,
-                    ZipCode = deliveryAddress.ZipCode
-                }
+                Address = addressToUse 
             };
 
             _context.Orders.Add(order);
@@ -44,6 +62,8 @@ namespace OrderServiceApi.Services
 
             return MapToDto(order);
         }
+
+
 
         public async Task<OrderDto> GetOrderByIdAsync(int orderId)
         {
@@ -75,6 +95,28 @@ namespace OrderServiceApi.Services
 
             return orders.Select(MapToDto).ToList();
         }
+        public async Task<bool> UpdateOrderStatusAsync(int orderId, string newStatus)
+        {
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null)
+            {
+                return false;
+            }
+
+            if (Enum.TryParse<OrderStatus>(newStatus, out var status))
+            {
+                order.Status = status;
+                _context.Orders.Update(order);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+
+            return false;
+        }
+
+      
+
 
         private OrderDto MapToDto(Order order)
         {

@@ -1,5 +1,6 @@
 ﻿using DTOs.Admin;
 using DTOs.Orders;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using OrderServiceApi.Services;
@@ -8,6 +9,7 @@ namespace OrderServiceApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class OrdersController : ControllerBase
     {
         private readonly IOrderService _orderService;
@@ -51,11 +53,13 @@ namespace OrderServiceApi.Controllers
             return Ok(ordersDto);
         }
         [HttpGet("all")]
+        [Authorize(Roles ="Admin")]
         public async Task<IActionResult> GetAllOrders()
         {
-            var ordersDto = await _orderService.GetAllOrdersAsync();  // Отримання всіх замовлень
-            var productsDto = await _productService.GetProductsAsync();  // Отримання всіх продуктів
-            var usersDto = await _userService.GetAllUsersAsync();  // Отримання всіх користувачів
+            var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            var ordersDto = await _orderService.GetAllOrdersAsync();  
+            var productsDto = await _productService.GetProductsAsync(token);  
+            var usersDto = await _userService.GetAllUsersAsync(token);  
 
             var fullOrders = ordersDto.Select(order => new FullOrderDto
             {
@@ -63,19 +67,41 @@ namespace OrderServiceApi.Controllers
                 CreatedAt = order.CreatedAt,
                 Status = order.Status,
                 TotalPrice = order.Items.Sum(item =>
-                    productsDto.FirstOrDefault(product => product.Id == item.ProductId)?.Price * item.Quantity ?? 0),  // Розрахунок загальної ціни з прайсів продуктів
-                User = usersDto.FirstOrDefault(user => user.Id == order.UserId),  // Пошук користувача за id
-                DeliveryAddress = order.DeliveryAddress,  // Адреса доставки
+                    productsDto.FirstOrDefault(product => product.Id == item.ProductId)?.Price * item.Quantity ?? 0),  
+                User = usersDto.FirstOrDefault(user => user.Id == order.UserId), 
+                DeliveryAddress = order.DeliveryAddress, 
                 Items = order.Items.Select(item => new FullOrderItemDto
                 {
-                    Item = productsDto.FirstOrDefault(product => product.Id == item.ProductId),  // Пошук продукту за id
+                    Item = productsDto.FirstOrDefault(product => product.Id == item.ProductId),  
                     Quantity = item.Quantity,
-                    Price = productsDto.FirstOrDefault(product => product.Id == item.ProductId)?.Price ?? 0  // Витягування ціни продукту
+                    Price = productsDto.FirstOrDefault(product => product.Id == item.ProductId)?.Price ?? 0  
                 }).ToList()
             }).ToList();
 
             return Ok(fullOrders);
         }
+
+        [HttpPost("update-status")]
+        [Authorize(Roles ="Admin")]
+        public async Task<IActionResult> UpdateOrderStatus([FromBody] UpdateOrderStatusRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.NewStatus))
+            {
+                return BadRequest("Invalid status.");
+            }
+
+            var result = await _orderService.UpdateOrderStatusAsync(request.OrderId, request.NewStatus);
+
+            if (result)
+            {
+                return Ok("Order status updated successfully.");
+            }
+
+            return NotFound("Order not found.");
+        }
+
+
+
 
     }
 }

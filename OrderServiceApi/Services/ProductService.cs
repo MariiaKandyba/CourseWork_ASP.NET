@@ -1,4 +1,5 @@
 ﻿using DTOs.Products;
+using NuGet.Common;
 
 namespace OrderServiceApi.Services
 {
@@ -11,8 +12,9 @@ namespace OrderServiceApi.Services
             _httpClient = httpClient;
         }
 
-        public async Task<List<ProductDto>> GetProductsAsync()
+        public async Task<List<ProductDto>> GetProductsAsync(string token)
         {
+            _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
             var response = await _httpClient.GetAsync("https://localhost:7140/gateway/products");
             return await response.Content.ReadFromJsonAsync<List<ProductDto>>();
         }

@@ -9,6 +9,7 @@ namespace OrderServiceApi.Services
         Task<OrderDto> GetOrderByIdAsync(int orderId);
         Task<List<OrderDto>> GetOrdersByUserIdAsync(int userId);
         Task<List<OrderDto>> GetAllOrdersAsync();
+        Task<bool> UpdateOrderStatusAsync(int orderId, string newStatus);
 
     }
 
