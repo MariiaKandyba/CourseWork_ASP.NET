@@ -56,6 +56,11 @@ namespace Client.Services.Products
             var response = await _httpClient.GetAsync(url);
             return await response.Content.ReadFromJsonAsync<int>();
         }
+        public async Task<bool> AddReviewAsync(ReviewDto reviewDto)
+        {
+            var response = await _httpClient.PostAsJsonAsync("https://localhost:7140/gateway/products/reviews", reviewDto);
+            return response.IsSuccessStatusCode;
+        }
 
 
 
