@@ -12,17 +12,18 @@ namespace UserServiceApi.Controllers
     [Route("api/users")]
     public class UserController : ControllerBase
     {
-        private readonly IUserService _userService;
-
-        public UserController(IUserService userService)
+        private readonly IUserManagementService _userManagementService;
+        private readonly IAuthenticationService _authenticationService;
+        public UserController(IUserManagementService userManagementService, IAuthenticationService authenticationService)
         {
-            _userService = userService;
+            _authenticationService = authenticationService;
+            _userManagementService = userManagementService;
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
-            var result = await _userService.RegisterAsync(registerDto);
+            var result = await _authenticationService.RegisterAsync(registerDto);
             if (result.IsSuccess)
             {
                 return Ok(new AuthResultDto
@@ -41,7 +42,7 @@ namespace UserServiceApi.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
-            var result = await _userService.LoginAsync(loginDto);
+            var result = await _authenticationService.LoginAsync(loginDto);
 
             if (result.IsSuccess)
             {
@@ -65,7 +66,7 @@ namespace UserServiceApi.Controllers
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateDto updateProfileDto)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            var result = await _userService.UpdateProfileAsync(userId, updateProfileDto);
+            var result = await _authenticationService.UpdateProfileAsync(userId, updateProfileDto);
             if (result.IsSuccess)
             {
                 return Ok(new AuthResultDto
@@ -82,9 +83,10 @@ namespace UserServiceApi.Controllers
             });
         }
         [HttpGet("all")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAllUsers()
         {
-            var result = await _userService.GetAllUsersAsync();
+            var result = await _userManagementService.GetAllUsersAsync();
             if (result == null || !result.Any())
             {
                 return NotFound("No users found.");
@@ -92,6 +94,43 @@ namespace UserServiceApi.Controllers
             
             return Ok(result);
         }
+        [HttpPost("create")]
+        [Authorize(Roles = "Admin")]
+
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserDto registerDto)
+        {
+            var result = await _userManagementService.CreateUserAsync(registerDto);
+            if (result.IsSuccess)
+            {
+                return Ok(new AuthResultDto
+                {
+                    IsSuccess = true,
+                });
+            }
+
+            return BadRequest(new AuthResultDto
+            {
+                IsSuccess = false,
+                ErrorMessage = result.ErrorMessage
+            });
+        }
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var result = await _userManagementService.DeleteUserAsync(id);
+            if (result.IsSuccess)
+            {
+                return NoContent(); 
+            }
+
+            return NotFound(new
+            {
+                IsSuccess = false,
+                ErrorMessage = "User not found"
+            }); 
+        }
+
 
     }
 }

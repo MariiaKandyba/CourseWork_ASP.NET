@@ -31,8 +31,8 @@ namespace UserServiceApi.Data
                 .HasMany(u => u.Roles)
                 .WithMany(r => r.Users)
                 .UsingEntity(j => j.HasData(
-                    new { UsersId = 1, RolesId = 1 }, // Admin user has Admin role
-                    new { UsersId = 2, RolesId = 2 }  // Regular user has User role
+                    new { UsersId = 1, RolesId = 1 }, 
+                    new { UsersId = 2, RolesId = 2 }  
                 ));
         }
 
