@@ -4,46 +4,30 @@ using Microsoft.AspNetCore.Mvc;
 using Client.Extensions;
 using Client.Models;
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace Client.Controllers
 {
+   
     public class CartController : Controller
     {
         private readonly ProductService _productService;
-
 
         public CartController(ProductService productService)
         {
             _productService = productService;
         }
 
-        //public async Task<IActionResult>Index()
-        //{
-        //    var cart = GetCartFromSession();
-        //    var productIds = cart.Select(item => item.ProductId).ToList();
-
-        //    var products = await _productService.GetProductsByIdsAsync(productIds);
-
-        //    var productCartViewModels = products.Select(product => new ProductCartViewModel
-        //    {
-        //        Id = product.Id,
-        //        Name = product.Name,
-        //        Price = product.Price,
-        //        ImageUrl = product.Images.FirstOrDefault()?.ImageUrl,
-        //        Description = product.Description,
-        //        Quantity = cart.FirstOrDefault(item => item.ProductId == product.Id)?.Quantity ?? 0 
-        //    }).ToList();
-        //    decimal totalAmount = productCartViewModels.Sum(item => item.Price * item.Quantity);
-
-
-        //    return View(productCartViewModels);
-        //}
 
         public async Task<IActionResult> Index()
         {
             var cart = GetCartFromSession();
             var productIds = cart.Select(item => item.ProductId).ToList();
+            if (productIds.Count == 0)
+            {
+                return RedirectToAction("Index", "Products");
+            }
             var products = await _productService.GetProductsByIdsAsync(productIds);
 
             var productCartViewModels = products.Select(product => new ProductCartViewModel

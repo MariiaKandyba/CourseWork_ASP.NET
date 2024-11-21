@@ -8,9 +8,12 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.IdentityModel.Tokens.Jwt;
 using DTOs.Products;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Client.Controllers
 {
+    [Authorize]
+
     public class OrderController : Controller
     {
         private readonly IOrderService _orderService;
@@ -94,8 +97,9 @@ namespace Client.Controllers
                 create.Items = orderItems;
                 create.DeliveryAddress = order.DeliveryAddress;
                 create.UserId = userId;
-
-                var a = _orderService.CreateOrderAsync(create);
+                var token = HttpContext.Request.Cookies["jwtToken"];
+                var a = _orderService.CreateOrderAsync(create, token);
+                HttpContext.Session.Remove("Cart");
                 return RedirectToAction("Orders");
                
         }
@@ -104,12 +108,12 @@ namespace Client.Controllers
         {
             var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             int userId = int.TryParse(userIdString, out int id) ? id : 0;
+            var token = HttpContext.Request.Cookies["jwtToken"];
+            var orders = await _orderService.GetOrderByUserAsync(userId, token);
 
-            var orders = await _orderService.GetOrderByUserAsync(userId);
-
-            if (orders == null || !orders.Any())
+            if (orders == null || orders.Count == 0)
             {
-                return Content("NoOrders"); 
+                return RedirectToAction("Index", "Products");
             }
 
             return View(orders);
@@ -117,7 +121,8 @@ namespace Client.Controllers
         [HttpGet]
         public async Task<IActionResult> OrderDetails(int id)
         {
-            var orderDetails = await _orderService.GetOrderByIdAsync(id);
+            var token = HttpContext.Request.Cookies["jwtToken"];
+            var orderDetails = await _orderService.GetOrderByIdAsync(id, token);
 
             if (orderDetails == null)
             {
@@ -131,7 +136,7 @@ namespace Client.Controllers
             {
                 DeliveryAddress = orderDetails.DeliveryAddress,
                 Status = orderDetails.Status,
-                TotalPrice = orderDetails.Items.Sum(item => item.Quantity * products.First(p => p.Id == item.ProductId).Price), // Обчислення ціни
+                TotalPrice = orderDetails.Items.Sum(item => item.Quantity * products.First(p => p.Id == item.ProductId).Price),
                 Items = orderDetails.Items.Select(item => new ProductCartViewModel
                 {
                     Id = item.ProductId,
