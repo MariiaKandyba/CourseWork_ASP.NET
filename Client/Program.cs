@@ -1,4 +1,5 @@
 using Client.Areas.Services;
+using Client.Config;
 using Client.Models;
 using Client.Services.Auth;
 using Client.Services.Order;
@@ -12,13 +13,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 // Add services to the container.
-// Add services to the container.
 builder.Services.AddHttpClient<AuthService>();
 builder.Services.AddHttpClient<ProductService>();
 builder.Services.AddHttpClient<OrderService>();
 builder.Services.AddHttpClient<UserService>();
 builder.Services.AddHttpClient<StockProductService>();
-
+builder.Services.AddSingleton(new ApiGatewayConfig());
 
 
 builder.Services.AddDistributedMemoryCache(); 
