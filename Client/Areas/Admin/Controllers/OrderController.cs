@@ -26,7 +26,6 @@ namespace Client.Areas.Admin.Controllers
             return View(orders);
         }
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateOrderStatus([FromBody] UpdateOrderStatusRequest request)
         {
             if (request == null || string.IsNullOrWhiteSpace(request.NewStatus))

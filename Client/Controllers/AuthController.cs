@@ -145,7 +145,6 @@ namespace Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-
         public async Task<IActionResult> UpdateProfile(UpdateDto model)
         {
             if (ModelState.IsValid)
