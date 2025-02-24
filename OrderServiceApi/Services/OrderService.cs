@@ -1,49 +1,21 @@
 ﻿using DTOs.Orders;
-using DTOs.Products;
 using Microsoft.EntityFrameworkCore;
-using OrderServiceApi.Data;
 using OrderServiceApi.Models;
-using System.Net.Http;
+using OrderServiceApi.Repositories;
 
 namespace OrderServiceApi.Services
 {
     public class OrderService : IOrderService
     {
-        private readonly OrderDbContext _context;
+        private readonly IOrderRepository _orderRepository;
 
-        public OrderService(OrderDbContext context)
+        public OrderService(IOrderRepository orderRepository)
         {
-            _context = context;
+            _orderRepository = orderRepository;
         }
 
         public async Task<OrderDto> CreateOrder(int userId, List<OrderItemDto> items, AddressDto deliveryAddress)
         {
-            var existingAddress = await _context.Addresses
-                .FirstOrDefaultAsync(a => a.Street == deliveryAddress.Street &&
-                                          a.City == deliveryAddress.City &&
-                                          a.ZipCode == deliveryAddress.ZipCode &&
-                                          a.Country == deliveryAddress.Country);
-
-            Address addressToUse;
-
-            if (existingAddress != null)
-            {
-                addressToUse = existingAddress;
-            }
-            else
-            {
-                addressToUse = new Address()
-                {
-                    Country = deliveryAddress.Country,
-                    City = deliveryAddress.City,
-                    Street = deliveryAddress.Street,
-                    ZipCode = deliveryAddress.ZipCode
-                };
-
-                _context.Add(addressToUse);
-                await _context.SaveChangesAsync();
-            }
-
             var order = new Order
             {
                 IdUser = userId,
@@ -54,69 +26,45 @@ namespace OrderServiceApi.Services
                 }).ToList(),
                 CreatedAt = DateTime.UtcNow,
                 Status = OrderStatus.Pending,
-                Address = addressToUse 
+                Address = new Address
+                {
+                    Country = deliveryAddress.Country,
+                    City = deliveryAddress.City,
+                    Street = deliveryAddress.Street,
+                    ZipCode = deliveryAddress.ZipCode
+                }
             };
 
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
-
+            order = await _orderRepository.AddOrderAsync(order);
             return MapToDto(order);
         }
 
-
-
         public async Task<OrderDto> GetOrderByIdAsync(int orderId)
         {
-            var order = await _context.Orders
-                .Include(o => o.OrderItems)
-                .Include(o => o.Address)
-                .FirstOrDefaultAsync(o => o.Id == orderId);
-
+            var order = await _orderRepository.GetOrderByIdAsync(orderId);
             return MapToDto(order);
         }
 
         public async Task<List<OrderDto>> GetOrdersByUserIdAsync(int userId)
         {
-            var orders = await _context.Orders
-                .Where(o => o.IdUser == userId)
-                .Include(o => o.OrderItems)
-                .Include(o => o.Address)
-                .ToListAsync();
-
+            var orders = await _orderRepository.GetOrdersByUserIdAsync(userId);
             return orders.Select(MapToDto).ToList();
         }
 
         public async Task<List<OrderDto>> GetAllOrdersAsync()
         {
-            var orders = await _context.Orders
-                .Include(o => o.OrderItems)
-                .Include(o => o.Address)
-                .ToListAsync();
-
+            var orders = await _orderRepository.GetAllOrdersAsync();
             return orders.Select(MapToDto).ToList();
         }
+
         public async Task<bool> UpdateOrderStatusAsync(int orderId, string newStatus)
         {
-            var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
-
-            if (order == null)
-            {
-                return false;
-            }
-
             if (Enum.TryParse<OrderStatus>(newStatus, out var status))
             {
-                order.Status = status;
-                _context.Orders.Update(order);
-                await _context.SaveChangesAsync();
-                return true;
+                return await _orderRepository.UpdateOrderStatusAsync(orderId, status);
             }
-
             return false;
         }
-
-      
-
 
         private OrderDto MapToDto(Order order)
         {
@@ -143,7 +91,5 @@ namespace OrderServiceApi.Services
                 }
             };
         }
-
-       
     }
 }

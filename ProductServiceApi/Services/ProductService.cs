@@ -25,46 +25,10 @@ namespace ProductServiceApi.Services
                 .Include(p => p.Reviews)
                 .ToListAsync();
 
-            var productDtos = products.Select(p => new FullProductDto
-            {
-                Product = new ProductDto
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Description = p.Description,
-                    Price = p.Price,
-                    IsAvailable = p.IsAvailable,
-                    Category = new CategoryDto
-                    {
-                        Id = p.Category.Id,
-                        Name = p.Category.Name
-                    },
-                    Brand = new BrandDto
-                    {
-                        Id = p.Brand.Id,
-                        Name = p.Brand.Name
-                    },
-                    Specifications = p.Specifications.Select(s => new SpecificationDto
-                    {
-                        Key = s.Key,
-                        Value = s.Value
-                    }).ToList(),
-                    Images = p.Images.Select(i => new ImageDto
-                    {
-                        ImageUrl = i.ImageUrl
-                    }).ToList(),
-                    Reviews = p.Reviews.Select(r => new ReviewDto
-                    {
-                        Rating = r.Rating,
-                        Comment = r.Comment,
-                        ReviewDate = r.ReviewDate
-                    }).ToList()
-                },
-                StockQuantity = p.Stock
-            }).ToList();
-
-            return productDtos;
+            return products.Select(MapToFullProductDto).ToList();
         }
+
+
         public async Task<ProductDto?> GetProductByIdAsync(int id)
         {
             var product = await _context.Products
@@ -75,42 +39,10 @@ namespace ProductServiceApi.Services
                 .Include(p => p.Reviews)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
-            if (product == null) return null;
-
-            return new ProductDto
-            {
-                Id = product.Id,
-                Name = product.Name,
-                Description = product.Description,
-                Price = product.Price,
-                IsAvailable = product.IsAvailable,
-                Category = product.Category != null ? new CategoryDto
-                {
-                    Id = product.Category.Id,
-                    Name = product.Category.Name
-                } : null,
-                Brand = product.Brand != null ? new BrandDto
-                {
-                    Id = product.Brand.Id,
-                    Name = product.Brand.Name
-                } : null,
-                Specifications = product.Specifications?.Select(s => new SpecificationDto
-                {
-                    Key = s.Key,
-                    Value = s.Value
-                }).ToList(),
-                Images = product.Images?.Select(i => new ImageDto
-                {
-                    ImageUrl = i.ImageUrl
-                }).ToList(),
-                Reviews = product.Reviews?.Select(r => new ReviewDto
-                {
-                    Rating = r.Rating,
-                    Comment = r.Comment,
-                    ReviewDate = r.ReviewDate
-                }).ToList()
-            };
+            return product != null ? MapToProductDto(product) : null;
         }
+        
+        
         public async Task<bool> CreateReviewAsync(ReviewDto review)
         {
             var rev = new ProductReview()
@@ -124,73 +56,23 @@ namespace ProductServiceApi.Services
             await _context.SaveChangesAsync();
             return true;
 
-
         }
 
         public async Task<ProductDto?> CreateProductAsync(ProductCreateDto productCreateDto)
         {
-            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == productCreateDto.CategoryId);
-            var brand = await _context.Brands.FirstOrDefaultAsync(b => b.Id == productCreateDto.BrandId);
+            var category = await _context.Categories.FindAsync(productCreateDto.CategoryId);
+            var brand = await _context.Brands.FindAsync(productCreateDto.BrandId);
 
             if (category == null || brand == null)
-            {
-                return null; 
-            }
+                return null;
 
-            var product = new Product
-            {
-                Name = productCreateDto.Name,
-                Description = productCreateDto.Description,
-                Price = productCreateDto.Price,
-                IsAvailable = productCreateDto.IsAvailable,
-                Category = category,
-                Brand = brand,
-                Images = productCreateDto.Images?.Select(i => new ProductImage
-                {
-                    ImageUrl = i.ImageUrl
-                }).ToList(),
-                Stock = productCreateDto.StockQuantity
-            };
+            var product = MapToProduct(productCreateDto, category, brand);
 
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
 
-            return new ProductDto
-            {
-                Id = product.Id,
-                Name = product.Name,
-                Description = product.Description,
-                Price = product.Price,
-                IsAvailable = product.IsAvailable,
-                Category = new CategoryDto
-                {
-                    Id = category.Id,
-                    Name = category.Name
-                },
-                Brand = new BrandDto
-                {
-                    Id = brand.Id,
-                    Name = brand.Name
-                },
-                Specifications = product.Specifications?.Select(s => new SpecificationDto
-                {
-                    Key = s.Key,
-                    Value = s.Value
-                }).ToList(),
-                Images = product.Images?.Select(i => new ImageDto
-                {
-                    ImageUrl = i.ImageUrl
-                }).ToList(),
-                Reviews = product.Reviews?.Select(r => new ReviewDto
-                {
-                    Rating = r.Rating,
-                    Comment = r.Comment,
-                    ReviewDate = r.ReviewDate
-                }).ToList()
-            };
+            return MapToProductDto(product); 
         }
-
-
         public async Task<bool> DeleteProductAsync(int productId)
         {
             var product = await _context.Products.FindAsync(productId);
@@ -209,7 +91,7 @@ namespace ProductServiceApi.Services
         public async Task<IEnumerable<ProductDto>> GetProductsByIdsAsync(List<int> ids)
         {
             var products = await _context.Products
-                .Where(p => ids.Contains(p.Id))
+                .Where(p => ids.Contains(p.Id)) 
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.Specifications)
@@ -217,45 +99,13 @@ namespace ProductServiceApi.Services
                 .Include(p => p.Reviews)
                 .ToListAsync();
 
-            var productDtos = products.Select(p => new ProductDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Description = p.Description,
-                Price = p.Price,
-                IsAvailable = p.IsAvailable,
-                Category = new CategoryDto
-                {
-                    Id = p.Category.Id,
-                    Name = p.Category.Name
-                },
-                Brand = new BrandDto
-                {
-                    Id = p.Brand.Id,
-                    Name = p.Brand.Name
-                },
-                Specifications = p.Specifications.Select(s => new SpecificationDto
-                {
-                    Key = s.Key,
-                    Value = s.Value
-                }).ToList(),
-                Images = p.Images.Select(i => new ImageDto
-                {
-                    ImageUrl = i.ImageUrl
-                }).ToList(),
-                Reviews = p.Reviews.Select(r => new ReviewDto
-                {
-                    Rating = r.Rating,
-                    Comment = r.Comment,
-                    ReviewDate = r.ReviewDate
-                }).ToList()
-            }).ToList();
+            var productDtos = products.Select(MapToProductDto).ToList();
 
             return productDtos;
         }
 
 
-        
+
         public async Task<FullProductDto?> GetFullProductByIdAsync(int id)
         {
             var product = await _context.Products
@@ -270,43 +120,10 @@ namespace ProductServiceApi.Services
 
             return new FullProductDto
             {
-                Product = new ProductDto
-                {
-                    Id = product.Id,
-                    Name = product.Name,
-                    Description = product.Description,
-                    Price = product.Price,
-                    IsAvailable = product.IsAvailable,
-                    Category = product.Category != null ? new CategoryDto
-                    {
-                        Id = product.Category.Id,
-                        Name = product.Category.Name
-                    } : null,
-                    Brand = product.Brand != null ? new BrandDto
-                    {
-                        Id = product.Brand.Id,
-                        Name = product.Brand.Name
-                    } : null,
-                    Specifications = product.Specifications?.Select(s => new SpecificationDto
-                    {
-                        Key = s.Key,
-                        Value = s.Value
-                    }).ToList(),
-                    Images = product.Images?.Select(i => new ImageDto
-                    {
-                        ImageUrl = i.ImageUrl
-                    }).ToList(),
-                    Reviews = product.Reviews?.Select(r => new ReviewDto
-                    {
-                        Rating = r.Rating,
-                        Comment = r.Comment,
-                        ReviewDate = r.ReviewDate
-                    }).ToList()
-                },
+                Product = MapToProductDto(product),
                 StockQuantity = product.Stock
             };
         }
-
 
 
         public async Task<int> GetTotalProductCountAsync(string categories = null)
@@ -344,39 +161,7 @@ namespace ProductServiceApi.Services
                 .Take(pageSize)
                 .ToListAsync();
 
-            var productDtos = products.Select(p => new ProductDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Description = p.Description,
-                Price = p.Price,
-                IsAvailable = p.IsAvailable,
-                Category = new CategoryDto
-                {
-                    Id = p.Category.Id,
-                    Name = p.Category.Name
-                },
-                Brand = new BrandDto
-                {
-                    Id = p.Brand.Id,
-                    Name = p.Brand.Name
-                },
-                Specifications = p.Specifications.Select(s => new SpecificationDto
-                {
-                    Key = s.Key,
-                    Value = s.Value
-                }).ToList(),
-                Images = p.Images.Select(i => new ImageDto
-                {
-                    ImageUrl = i.ImageUrl
-                }).ToList(),
-                Reviews = p.Reviews.Select(r => new ReviewDto
-                {
-                    Rating = r.Rating,
-                    Comment = r.Comment,
-                    ReviewDate = r.ReviewDate
-                }).ToList()
-            }).ToList();
+            var productDtos = products.Select(MapToProductDto).ToList();
 
             return productDtos;
         }
@@ -390,70 +175,142 @@ namespace ProductServiceApi.Services
                 .Include(p => p.Reviews)
                 .ToListAsync();
 
-            var productDtos = products.Select(p => new ProductDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Description = p.Description,
-                Price = p.Price,
-                IsAvailable = p.IsAvailable,
-                Category = new CategoryDto
-                {
-                    Id = p.Category.Id,
-                    Name = p.Category.Name
-                },
-                Brand = new BrandDto
-                {
-                    Id = p.Brand.Id,
-                    Name = p.Brand.Name
-                },
-                Specifications = p.Specifications.Select(s => new SpecificationDto
-                {
-                    Key = s.Key,
-                    Value = s.Value
-                }).ToList(),
-                Images = p.Images.Select(i => new ImageDto
-                {
-                    ImageUrl = i.ImageUrl
-                }).ToList(),
-                Reviews = p.Reviews.Select(r => new ReviewDto
-                {
-                    Rating = r.Rating,
-                    Comment = r.Comment,
-                    ReviewDate = r.ReviewDate
-                }).ToList()
-            }).ToList();
+            var productDtos = products.Select(MapToProductDto).ToList();
 
             return productDtos;
         }
 
-        
+
 
         public async Task<bool> UpdateProductAsync(int id, ProductEditDto productEditDto)
         {
             var existingProduct = await _context.Products
-                .Include(c => c.Category)
+                .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (existingProduct == null)
-            {
-                return false;
-            }
+                return false; 
 
             existingProduct.Name = productEditDto.Name ?? existingProduct.Name;
             existingProduct.Price = productEditDto.Price != 0 ? productEditDto.Price : existingProduct.Price;
             existingProduct.IsAvailable = productEditDto.IsAvailable;
             existingProduct.Stock = productEditDto.StockQuantity != 0 ? productEditDto.StockQuantity : existingProduct.Stock;
-
             existingProduct.Category = await _context.Categories.FindAsync(productEditDto.CategoryId);
             existingProduct.Brand = await _context.Brands.FindAsync(productEditDto.BrandId);
 
-            _context.Entry(existingProduct).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-
             return true;
         }
+
+
+
+
+
+
+
+
+        private ProductDto MapToProductDto(Product product)
+        {
+            return new ProductDto
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                Price = product.Price,
+                IsAvailable = product.IsAvailable,
+                Category = product.Category != null ? new CategoryDto
+                {
+                    Id = product.Category.Id,
+                    Name = product.Category.Name
+                } : null,
+                Brand = product.Brand != null ? new BrandDto
+                {
+                    Id = product.Brand.Id,
+                    Name = product.Brand.Name
+                } : null,
+                Specifications = product.Specifications?.Select(s => new SpecificationDto
+                {
+                    Key = s.Key,
+                    Value = s.Value
+                }).ToList(),
+                Images = product.Images?.Select(i => new ImageDto
+                {
+                    ImageUrl = i.ImageUrl
+                }).ToList(),
+                Reviews = product.Reviews?.Select(r => new ReviewDto
+                {
+                    Rating = r.Rating,
+                    Comment = r.Comment,
+                    ReviewDate = r.ReviewDate
+                }).ToList()
+            };
+        }
+
+        private FullProductDto MapToFullProductDto(Product product)
+        {
+            return new FullProductDto
+            {
+                Product = MapToProductDto(product),
+                StockQuantity = product.Stock
+            };
+        }
+        private ReviewDto MapToReviewDto(ProductReview review)
+        {
+            return new ReviewDto
+            {
+                Rating = review.Rating,
+                Comment = review.Comment,
+                ReviewDate = review.ReviewDate
+            };
+        }
+        private SpecificationDto MapToSpecificationDto(ProductSpecification specification)
+        {
+            return new SpecificationDto
+            {
+                Key = specification.Key,
+                Value = specification.Value
+            };
+        }
+        private BrandDto MapToBrandDto(Brand brand)
+        {
+            return new BrandDto
+            {
+                Id = brand.Id,
+                Name = brand.Name
+            };
+        }
+        private ImageDto MapToImageDto(ProductImage image)
+        {
+            return new ImageDto
+            {
+                ImageUrl = image.ImageUrl
+            };
+        }
+
+        private Product MapToProduct(ProductCreateDto productCreateDto, Category category, Brand brand)
+        {
+            return new Product
+            {
+                Name = productCreateDto.Name,
+                Description = productCreateDto.Description,
+                Price = productCreateDto.Price,
+                IsAvailable = productCreateDto.IsAvailable,
+                Category = category,
+                Brand = brand,
+                Images = productCreateDto.Images?.Select(i => new ProductImage
+                {
+                    ImageUrl = i.ImageUrl
+                }).ToList(),
+                Stock = productCreateDto.StockQuantity
+            };
+        }
+
+
+
+
+
+
     }
 
 }

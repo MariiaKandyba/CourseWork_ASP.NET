@@ -3,7 +3,7 @@ using DTOs.Orders;
 
 namespace OrderServiceApi.Services
 {
-    public class UserService
+    public class UserService : IUserService
     {
         private readonly HttpClient _httpClient;
 

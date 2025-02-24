@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OrderServiceApi.Data;
+using OrderServiceApi.Repositories;
 using OrderServiceApi.Services;
 using System.Text;
 
@@ -14,8 +15,9 @@ builder.Services.AddHttpClient();
 builder.Services.AddDbContext<OrderDbContext>(options => options
 .UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")).EnableSensitiveDataLogging());
 builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddHttpClient<ProductService>();
-builder.Services.AddHttpClient<UserService>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddHttpClient<IProductService, ProductService>();
+builder.Services.AddHttpClient<IUserService, UserService>();
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

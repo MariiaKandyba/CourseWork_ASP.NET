@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using DTOs.Products;
+using ProductServiceApi.Services;
 
 namespace ProductServiceApi.Controllers
 {
@@ -14,39 +15,24 @@ namespace ProductServiceApi.Controllers
     [ApiController]
     public class CategoryController : ControllerBase
     {
-        private readonly ProductDbContext _context;
+        private readonly ICategoryService _categoryService;
 
-        public CategoryController(ProductDbContext context)
+        public CategoryController(ICategoryService categoryService)
         {
-            _context = context;
+            _categoryService = categoryService;
         }
+
         [HttpGet]
         public async Task<ActionResult<List<CategoryDto>>> GetCategories()
         {
-            var categories = await _context.Categories
-                .Select(c => new CategoryDto
-                {
-                    Id = c.Id,
-                    Name = c.Name
-                })
-                .ToListAsync();
-
+            var categories = await _categoryService.GetCategoriesAsync();
             return Ok(categories);
         }
 
-        // GET: api/Category/5
         [HttpGet("{id}")]
         public async Task<ActionResult<CategoryDto>> GetCategoryById(int id)
         {
-            var category = await _context.Categories
-                .Where(c => c.Id == id)
-                .Select(c => new CategoryDto
-                {
-                    Id = c.Id,
-                    Name = c.Name
-                })
-                .FirstOrDefaultAsync();
-
+            var category = await _categoryService.GetCategoryByIdAsync(id);
             if (category == null)
             {
                 return NotFound($"Category with ID {id} not found.");
@@ -55,6 +41,6 @@ namespace ProductServiceApi.Controllers
             return Ok(category);
         }
 
-        
+
     }
 }

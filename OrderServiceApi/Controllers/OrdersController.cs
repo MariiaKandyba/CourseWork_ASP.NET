@@ -13,10 +13,10 @@ namespace OrderServiceApi.Controllers
     public class OrdersController : ControllerBase
     {
         private readonly IOrderService _orderService;
-        private readonly ProductService _productService;
-        private readonly UserService _userService;
+        private readonly IProductService _productService;
+        private readonly IUserService _userService;
 
-        public OrdersController(IOrderService orderService, ProductService productService, UserService userService)
+        public OrdersController(IOrderService orderService, IProductService productService, IUserService userService)
         {
             _orderService = orderService;
             _productService = productService;
